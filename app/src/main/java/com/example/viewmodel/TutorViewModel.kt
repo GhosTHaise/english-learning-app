@@ -20,7 +20,30 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-data class ChatMessage(val role: String, val text: String)
+enum class TutorMode(val title: String, val description: String, val prompt: String) {
+    CASUAL(
+        "Ami Conversationnel",
+        "Echanges naturels et quotidien",
+        "You are an AI English tutor for a French student. Keep responses short, encouraging, natural, and friendly. Correct minor grammar mistakes naturally."
+    ),
+    BUSINESS(
+        "Business & Carrière",
+        "Vocabulaire professionnel et entretiens",
+        "You are an executive English coach. Focus on professional vocabulary, formal expressions, email etiquette, and interview preparation. Correct errors precisely."
+    ),
+    GRAMMAR(
+        "Phonétique & Grammaire",
+        "Explications détaillées et corrections",
+        "You are a master English linguistics tutor. Analyze the user's sentence structure, highlight grammar or pronunciation tips in detail, and explain nuances in French if needed."
+    )
+}
+
+data class ChatMessage(
+    val role: String,
+    val text: String,
+    val fluencyScore: Int? = null,
+    val feedback: String? = null
+)
 
 class TutorViewModel(private val repository: Repository) : ViewModel() {
     val dailyWords: StateFlow<List<VocabularyWord>> = repository.dailyWords
@@ -37,6 +60,9 @@ class TutorViewModel(private val repository: Repository) : ViewModel() {
             initialValue = null
         )
 
+    private val _selectedMode = MutableStateFlow(TutorMode.CASUAL)
+    val selectedMode = _selectedMode.asStateFlow()
+
     private val _chatHistory = MutableStateFlow<List<ChatMessage>>(emptyList())
     val chatHistory = _chatHistory.asStateFlow()
 
@@ -45,6 +71,13 @@ class TutorViewModel(private val repository: Repository) : ViewModel() {
 
     private val _error = MutableStateFlow<String?>(null)
     val error = _error.asStateFlow()
+
+    private val _lastSpeechAnalysis = MutableStateFlow<String?>(null)
+    val lastSpeechAnalysis = _lastSpeechAnalysis.asStateFlow()
+
+    fun selectMode(mode: TutorMode) {
+        _selectedMode.value = mode
+    }
 
     init {
         initDatabase()
@@ -124,8 +157,9 @@ class TutorViewModel(private val repository: Repository) : ViewModel() {
                     Content(role = if (msg.role == "ai") "model" else "user", parts = listOf(Part(text = msg.text)))
                 }
                 
+                val modePrompt = _selectedMode.value.prompt
                 val systemInstruction = Content(
-                    parts = listOf(Part(text = "You are an AI English tutor for a French-speaking student. Keep your responses short, encouraging, and helpful. Correct their English gently if they make mistakes, and primarily respond in English but you can explain in French if they seem confused. Keep it conversational."))
+                    parts = listOf(Part(text = "$modePrompt Keep responses under 4 sentences."))
                 )
 
                 val request = GenerateContentRequest(

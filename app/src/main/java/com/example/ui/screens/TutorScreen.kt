@@ -14,46 +14,70 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.viewmodel.ChatMessage
+import com.example.viewmodel.TutorMode
 import com.example.viewmodel.TutorViewModel
 import kotlinx.coroutines.launch
 import java.util.Locale
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TutorScreen(viewModel: TutorViewModel) {
     val chatHistory by viewModel.chatHistory.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
+    val selectedMode by viewModel.selectedMode.collectAsStateWithLifecycle()
+    
     var inputText by remember { mutableStateOf("") }
     
     val context = LocalContext.current
     var isListening by remember { mutableStateOf(false) }
+    var rmsDb by remember { mutableStateOf(0f) }
     var tts by remember { mutableStateOf<TextToSpeech?>(null) }
+    var playbackRate by remember { mutableStateOf(1.0f) }
+    
+    val listState = rememberLazyListState()
     
     val speechRecognizer = remember { SpeechRecognizer.createSpeechRecognizer(context) }
+
+    // Auto-scroll when new messages arrive
+    LaunchedEffect(chatHistory.size, isLoading) {
+        if (chatHistory.isNotEmpty()) {
+            val maxIndex = if (isLoading) chatHistory.size else chatHistory.size - 1
+            if (maxIndex >= 0) {
+                listState.animateScrollToItem(maxIndex)
+            }
+        }
+    }
 
     // TTS Init
     DisposableEffect(Unit) {
@@ -73,9 +97,20 @@ fun TutorScreen(viewModel: TutorViewModel) {
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            startListening(speechRecognizer, { isListening = it }, { text -> inputText = text })
+            startListening(
+                speechRecognizer = speechRecognizer,
+                setListening = { isListening = it },
+                onRmsChange = { rmsDb = it },
+                onResult = { text ->
+                    inputText = text
+                    viewModel.sendMessageToAI(text) { response ->
+                        tts?.setSpeechRate(playbackRate)
+                        tts?.speak(response, TextToSpeech.QUEUE_FLUSH, null, null)
+                    }
+                }
+            )
         } else {
-            Toast.makeText(context, "Permission refusée", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Permission microphone refusée", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -83,59 +118,163 @@ fun TutorScreen(viewModel: TutorViewModel) {
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
+            .imePadding()
     ) {
+        // Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 16.dp),
+                .padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "Pratique Conversationnelle",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                color = Color.White
-            )
+            Column {
+                Text(
+                    text = "Tuteur IA Vocal",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                Text(
+                    text = "Pratiquez votre accent en temps réel",
+                    fontSize = 11.sp,
+                    color = Color.White.copy(alpha = 0.6f)
+                )
+            }
+
             Box(
                 modifier = Modifier
                     .clip(CircleShape)
                     .background(Color(0xFF22C55E).copy(alpha = 0.2f))
                     .border(1.dp, Color(0xFF22C55E).copy(alpha = 0.3f), CircleShape)
-                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
             ) {
-                Text("HORS-LIGNE DISPONIBLE", color = Color(0xFF4ADE80), fontSize = 10.sp, letterSpacing = 1.sp)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.AutoAwesome, contentDescription = null, tint = Color(0xFF4ADE80), modifier = Modifier.size(12.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("GEMINI LIVE", color = Color(0xFF4ADE80), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                }
             }
-        }
-        
-        if (error != null) {
-            Text(text = error!!, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(bottom = 8.dp))
         }
 
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            reverseLayout = false
+        // Tutor Mode Chips
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp)
         ) {
-            items(chatHistory) { msg ->
-                ChatBubble(msg)
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-            if (isLoading) {
-                item {
-                    CircularProgressIndicator(
-                        color = Color.White,
-                        modifier = Modifier.align(Alignment.CenterHorizontally).padding(16.dp)
+            items(TutorMode.values()) { mode ->
+                val isSelected = mode == selectedMode
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            if (isSelected) Color(0xFF6366F1) else Color.White.copy(alpha = 0.08f)
+                        )
+                        .border(
+                            1.dp,
+                            if (isSelected) Color(0xFFA5B4FC) else Color.White.copy(alpha = 0.12f),
+                            RoundedCornerShape(12.dp)
+                        )
+                        .clickable { viewModel.selectMode(mode) }
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = mode.title,
+                        color = if (isSelected) Color.White else Color.White.copy(alpha = 0.7f),
+                        fontSize = 12.sp,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                     )
                 }
             }
         }
 
+        // Live Audio Spectrogram Visualizer Card
+        SpectrogramVisualizer(
+            isListening = isListening,
+            rmsDb = rmsDb,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+        
+        if (error != null) {
+            Text(
+                text = error!!,
+                color = MaterialTheme.colorScheme.error,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
+
+        // Chat History List
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            items(chatHistory) { msg ->
+                ChatBubble(
+                    msg = msg,
+                    onReplay = { text ->
+                        tts?.setSpeechRate(playbackRate)
+                        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+                    }
+                )
+            }
+            if (isLoading) {
+                item {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(8.dp)
+                    ) {
+                        CircularProgressIndicator(
+                            color = Color(0xFF60A5FA),
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Le tuteur génère sa réponse...",
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+            }
+        }
+
+        // Speed Control Bar
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp),
+                .padding(vertical = 6.dp),
+            horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Text("Vitesse audio :", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+            Spacer(modifier = Modifier.width(8.dp))
+            listOf(0.8f to "0.8x Lent", 1.0f to "1.0x Normal", 1.25f to "1.25x Rapide").forEach { (rate, label) ->
+                val isSelected = playbackRate == rate
+                Text(
+                    text = label,
+                    fontSize = 10.sp,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                    color = if (isSelected) Color(0xFF60A5FA) else Color.White.copy(alpha = 0.5f),
+                    modifier = Modifier
+                        .padding(horizontal = 4.dp)
+                        .clickable { playbackRate = rate }
+                )
+            }
+        }
+
+        // Bottom Input Control Row
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Microphone Button
             IconButton(
                 onClick = {
                     if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
@@ -143,20 +282,31 @@ fun TutorScreen(viewModel: TutorViewModel) {
                             speechRecognizer.stopListening()
                             isListening = false
                         } else {
-                            startListening(speechRecognizer, { isListening = it }, { text -> inputText = text })
+                            startListening(
+                                speechRecognizer = speechRecognizer,
+                                setListening = { isListening = it },
+                                onRmsChange = { rmsDb = it },
+                                onResult = { text ->
+                                    inputText = text
+                                    viewModel.sendMessageToAI(text) { response ->
+                                        tts?.setSpeechRate(playbackRate)
+                                        tts?.speak(response, TextToSpeech.QUEUE_FLUSH, null, null)
+                                    }
+                                }
+                            )
                         }
                     } else {
                         permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                     }
                 },
                 modifier = Modifier
-                    .size(56.dp)
+                    .size(54.dp)
                     .clip(CircleShape)
                     .background(
-                        if (isListening) androidx.compose.ui.graphics.SolidColor(Color.Red.copy(alpha = 0.5f)) 
+                        if (isListening) androidx.compose.ui.graphics.SolidColor(Color(0xFFEF4444)) 
                         else androidx.compose.ui.graphics.Brush.linearGradient(listOf(Color(0xFF6366F1), Color(0xFF2563EB)))
                     )
-                    .border(2.dp, Color.White.copy(alpha = 0.1f), CircleShape)
+                    .border(2.dp, Color.White.copy(alpha = 0.2f), CircleShape)
             ) {
                 Icon(
                     if (isListening) Icons.Filled.MicOff else Icons.Filled.Mic,
@@ -167,62 +317,125 @@ fun TutorScreen(viewModel: TutorViewModel) {
             
             Spacer(modifier = Modifier.width(8.dp))
 
+            // Text Input Field
             TextField(
                 value = inputText,
                 onValueChange = { inputText = it },
                 modifier = Modifier.weight(1f),
-                placeholder = { Text("Parlez ou tapez...") },
+                placeholder = { Text("Tapez votre réponse en anglais...", fontSize = 13.sp, color = Color.White.copy(alpha = 0.5f)) },
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.White.copy(alpha = 0.2f),
-                    unfocusedContainerColor = Color.White.copy(alpha = 0.2f),
+                    focusedContainerColor = Color.White.copy(alpha = 0.12f),
+                    unfocusedContainerColor = Color.White.copy(alpha = 0.12f),
                     focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
+                    unfocusedTextColor = Color.White,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent
                 ),
                 shape = CircleShape,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                 keyboardActions = KeyboardActions(onSend = {
                     val text = inputText
-                    inputText = ""
-                    viewModel.sendMessageToAI(text) { response ->
-                        tts?.speak(response, TextToSpeech.QUEUE_FLUSH, null, null)
+                    if (text.isNotBlank()) {
+                        inputText = ""
+                        viewModel.sendMessageToAI(text) { response ->
+                            tts?.setSpeechRate(playbackRate)
+                            tts?.speak(response, TextToSpeech.QUEUE_FLUSH, null, null)
+                        }
                     }
                 })
             )
             
             Spacer(modifier = Modifier.width(8.dp))
 
+            // Send Button
             IconButton(
                 onClick = {
                     val text = inputText
-                    inputText = ""
-                    viewModel.sendMessageToAI(text) { response ->
-                        tts?.speak(response, TextToSpeech.QUEUE_FLUSH, null, null)
+                    if (text.isNotBlank()) {
+                        inputText = ""
+                        viewModel.sendMessageToAI(text) { response ->
+                            tts?.setSpeechRate(playbackRate)
+                            tts?.speak(response, TextToSpeech.QUEUE_FLUSH, null, null)
+                        }
                     }
                 },
-                modifier = Modifier.background(MaterialTheme.colorScheme.primary, CircleShape)
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(Color(0xFF3B82F6), CircleShape)
             ) {
-                Icon(Icons.Filled.Send, contentDescription = "Envoyer", tint = Color.White)
+                Icon(Icons.Filled.Send, contentDescription = "Envoyer", tint = Color.White, modifier = Modifier.size(20.dp))
             }
         }
     }
 }
 
 @Composable
-fun ChatBubble(msg: ChatMessage) {
+fun ChatBubble(
+    msg: ChatMessage,
+    onReplay: (String) -> Unit
+) {
     val isUser = msg.role == "user"
     Box(
         modifier = Modifier.fillMaxWidth(),
         contentAlignment = if (isUser) Alignment.CenterEnd else Alignment.CenterStart
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(0.8f)
-                .clip(if (isUser) RoundedCornerShape(24.dp, 24.dp, 4.dp, 24.dp) else RoundedCornerShape(24.dp, 24.dp, 24.dp, 4.dp))
-                .background(if (isUser) androidx.compose.ui.graphics.Brush.linearGradient(listOf(Color(0xFF6366F1), Color(0xFF3B82F6))) else androidx.compose.ui.graphics.SolidColor(Color.White.copy(alpha = 0.1f)))
-                .border(1.dp, Color.White.copy(alpha = 0.1f), if (isUser) RoundedCornerShape(24.dp, 24.dp, 4.dp, 24.dp) else RoundedCornerShape(24.dp, 24.dp, 24.dp, 4.dp))
-                .padding(16.dp)
+        Column(
+            horizontalAlignment = if (isUser) Alignment.End else Alignment.Start,
+            modifier = Modifier.fillMaxWidth(0.85f)
         ) {
-            Text(text = msg.text, color = Color.White)
+            Box(
+                modifier = Modifier
+                    .clip(
+                        if (isUser) RoundedCornerShape(22.dp, 22.dp, 4.dp, 22.dp)
+                        else RoundedCornerShape(22.dp, 22.dp, 22.dp, 4.dp)
+                    )
+                    .background(
+                        if (isUser) androidx.compose.ui.graphics.Brush.linearGradient(
+                            listOf(Color(0xFF6366F1), Color(0xFF3B82F6))
+                        ) else androidx.compose.ui.graphics.SolidColor(Color.White.copy(alpha = 0.12f))
+                    )
+                    .border(
+                        1.dp,
+                        Color.White.copy(alpha = 0.15f),
+                        if (isUser) RoundedCornerShape(22.dp, 22.dp, 4.dp, 22.dp)
+                        else RoundedCornerShape(22.dp, 22.dp, 22.dp, 4.dp)
+                    )
+                    .padding(14.dp)
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (isUser) "Vous" else "Tuteur IA",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isUser) Color(0xFFE0E7FF) else Color(0xFF93C5FD)
+                        )
+
+                        if (!isUser) {
+                            Icon(
+                                imageVector = Icons.Filled.VolumeUp,
+                                contentDescription = "Réécouter",
+                                tint = Color.White.copy(alpha = 0.8f),
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .clickable { onReplay(msg.text) }
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = msg.text,
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp
+                    )
+                }
+            }
         }
     }
 }
@@ -230,21 +443,26 @@ fun ChatBubble(msg: ChatMessage) {
 private fun startListening(
     speechRecognizer: SpeechRecognizer,
     setListening: (Boolean) -> Unit,
+    onRmsChange: (Float) -> Unit,
     onResult: (String) -> Unit
 ) {
     val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
         putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
         putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US")
+        putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
     }
 
     speechRecognizer.setRecognitionListener(object : RecognitionListener {
         override fun onReadyForSpeech(params: Bundle?) { setListening(true) }
-        override fun onBeginningOfSpeech() {}
-        override fun onRmsChanged(rmsdB: Float) {}
+        override fun onBeginningOfSpeech() { setListening(true) }
+        override fun onRmsChanged(rmsdB: Float) {
+            onRmsChange(rmsdB)
+        }
         override fun onBufferReceived(buffer: ByteArray?) {}
         override fun onEndOfSpeech() { setListening(false) }
         override fun onError(error: Int) { setListening(false) }
         override fun onResults(results: Bundle?) {
+            setListening(false)
             val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
             if (!matches.isNullOrEmpty()) {
                 onResult(matches[0])
@@ -256,3 +474,4 @@ private fun startListening(
     
     speechRecognizer.startListening(intent)
 }
+
