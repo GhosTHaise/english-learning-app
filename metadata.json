@@ -1,0 +1,6 @@
+{
+  "name": "L'Anglais Facile",
+  "description": "Apprendre l'anglais interactif",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
