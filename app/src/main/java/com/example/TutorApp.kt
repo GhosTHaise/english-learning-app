@@ -16,7 +16,7 @@ class TutorApp : Application() {
         database = Room.databaseBuilder(
             applicationContext,
             AppDatabase::class.java, "tutor_database"
-        ).build()
+        ).fallbackToDestructiveMigration().build()
         repository = Repository(database.appDao())
     }
 }

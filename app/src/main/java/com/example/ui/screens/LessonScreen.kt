@@ -82,6 +82,7 @@ private val levelOptions = listOf(
 @Composable
 fun LessonScreen(viewModel: TutorViewModel) {
     val lessonState by viewModel.lessonState.collectAsStateWithLifecycle()
+    val completedLessons by viewModel.completedLessons.collectAsStateWithLifecycle()
     var selectedTopic by remember { mutableStateOf(presetTopics[0]) }
     var selectedLevel by remember { mutableStateOf("Intermediate") }
     var customTopicText by remember { mutableStateOf("") }
@@ -594,13 +595,98 @@ fun LessonScreen(viewModel: TutorViewModel) {
                             question = lesson.quizQuestion,
                             options = lesson.quizOptions,
                             correctIndex = lesson.correctOptionIndex,
-                            explanation = lesson.quizExplanation
+                            explanation = lesson.quizExplanation,
+                            onQuizCompleted = { userCorrect ->
+                                val score = if (userCorrect) 100 else 50
+                                viewModel.saveLessonCompletion(
+                                    lessonTitle = lesson.title,
+                                    topic = selectedTopic,
+                                    level = lesson.level,
+                                    score = score,
+                                    maxScore = 100,
+                                    status = if (userCorrect) "RÉUSSI" else "À REVOIR"
+                                )
+                            }
                         )
                     }
                 }
             }
 
             else -> {}
+        }
+
+        // Section 5: Completed Lessons History (Room Database)
+        if (completedLessons.isNotEmpty()) {
+            item {
+                Column(
+                    modifier = Modifier.padding(top = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "HISTORIQUE DES LEÇONS (${completedLessons.size})",
+                            color = Color(0xFFA5B4FC),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.5.sp
+                        )
+
+                        val avgScore = completedLessons.map { it.score }.average().toInt()
+                        Text(
+                            text = "Score moyen: $avgScore%",
+                            color = Color(0xFF4ADE80),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    completedLessons.take(5).forEach { completed ->
+                        GlassCard(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = completed.lessonTitle,
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = "${completed.topic} • ${completed.level}",
+                                        color = Color.White.copy(alpha = 0.6f),
+                                        fontSize = 11.sp
+                                    )
+                                }
+
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(
+                                            if (completed.score >= 80) Color(0xFF16A34A).copy(alpha = 0.3f)
+                                            else Color(0xFFD97706).copy(alpha = 0.3f)
+                                        )
+                                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                                ) {
+                                    Text(
+                                        text = "${completed.score}/${completed.maxScore}",
+                                        color = if (completed.score >= 80) Color(0xFF4ADE80) else Color(0xFFFBBF24),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -610,7 +696,8 @@ fun QuizWidget(
     question: String,
     options: List<String>,
     correctIndex: Int,
-    explanation: String
+    explanation: String,
+    onQuizCompleted: (userIsCorrect: Boolean) -> Unit = {}
 ) {
     var selectedOption by remember(question) { mutableStateOf<Int?>(null) }
     var isSubmitted by remember(question) { mutableStateOf(false) }
@@ -689,7 +776,12 @@ fun QuizWidget(
 
                 if (!isSubmitted) {
                     Button(
-                        onClick = { if (selectedOption != null) isSubmitted = true },
+                        onClick = {
+                            if (selectedOption != null) {
+                                isSubmitted = true
+                                onQuizCompleted(selectedOption == correctIndex)
+                            }
+                        },
                         enabled = selectedOption != null,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF2563EB),

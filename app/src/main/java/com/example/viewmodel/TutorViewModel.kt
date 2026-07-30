@@ -8,6 +8,7 @@ import com.example.api.Content
 import com.example.api.GenerateContentRequest
 import com.example.api.Part
 import com.example.api.RetrofitClient
+import com.example.data.CompletedLesson
 import com.example.data.Repository
 import com.example.data.UserProgress
 import com.example.data.VocabularyWord
@@ -97,6 +98,13 @@ class TutorViewModel(private val repository: Repository) : ViewModel() {
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = null
+        )
+
+    val completedLessons: StateFlow<List<CompletedLesson>> = repository.completedLessons
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
         )
 
     private val _selectedMode = MutableStateFlow(TutorMode.CASUAL)
@@ -353,6 +361,32 @@ class TutorViewModel(private val repository: Repository) : ViewModel() {
             correctOptionIndex = 2,
             quizExplanation = "'I would like...' est la formule standard de politesse pour exprimer un souhait ou passer une commande."
         )
+    }
+
+    fun saveLessonCompletion(
+        lessonTitle: String,
+        topic: String,
+        level: String,
+        score: Int,
+        maxScore: Int = 100,
+        status: String = "COMPLETED"
+    ) {
+        viewModelScope.launch {
+            val lesson = CompletedLesson(
+                lessonTitle = lessonTitle,
+                topic = topic,
+                level = level,
+                score = score,
+                maxScore = maxScore,
+                status = status,
+                timestamp = System.currentTimeMillis()
+            )
+            repository.saveCompletedLesson(lesson)
+
+            // Update user progress count
+            val currentProgress = userProgress.value ?: UserProgress(id = 1, currentStreak = 1, lastLoginTimestamp = System.currentTimeMillis(), wordsLearnedCount = 0)
+            repository.saveUserProgress(currentProgress.copy(wordsLearnedCount = currentProgress.wordsLearnedCount + 1))
+        }
     }
 }
 

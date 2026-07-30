@@ -26,6 +26,18 @@ data class UserProgress(
     val wordsLearnedCount: Int = 0
 )
 
+@Entity(tableName = "completed_lessons")
+data class CompletedLesson(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val lessonTitle: String,
+    val topic: String,
+    val level: String,
+    val score: Int,
+    val maxScore: Int = 100,
+    val status: String = "COMPLETED",
+    val timestamp: Long = System.currentTimeMillis()
+)
+
 @Dao
 interface AppDao {
     @Query("SELECT * FROM vocabulary ORDER BY id ASC")
@@ -45,9 +57,18 @@ interface AppDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun saveUserProgress(progress: UserProgress)
+
+    @Query("SELECT * FROM completed_lessons ORDER BY timestamp DESC")
+    fun getAllCompletedLessons(): Flow<List<CompletedLesson>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun saveCompletedLesson(lesson: CompletedLesson)
+
+    @Query("DELETE FROM completed_lessons")
+    suspend fun clearCompletedLessons()
 }
 
-@Database(entities = [VocabularyWord::class, UserProgress::class], version = 1, exportSchema = false)
+@Database(entities = [VocabularyWord::class, UserProgress::class, CompletedLesson::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun appDao(): AppDao
 }
@@ -56,6 +77,7 @@ class Repository(private val dao: AppDao) {
     val allWords = dao.getAllWords()
     val dailyWords = dao.getDailyWords()
     val userProgress = dao.getUserProgress()
+    val completedLessons = dao.getAllCompletedLessons()
 
     suspend fun insertInitialWordsIfEmpty(words: List<VocabularyWord>) {
         dao.insertWords(words)
@@ -67,5 +89,13 @@ class Repository(private val dao: AppDao) {
 
     suspend fun saveUserProgress(progress: UserProgress) {
         dao.saveUserProgress(progress)
+    }
+
+    suspend fun saveCompletedLesson(lesson: CompletedLesson) {
+        dao.saveCompletedLesson(lesson)
+    }
+
+    suspend fun clearCompletedLessons() {
+        dao.clearCompletedLessons()
     }
 }
