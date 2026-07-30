@@ -24,6 +24,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Mic
@@ -92,6 +93,27 @@ fun AppNavigation(viewModel: TutorViewModel) {
                     )
                 )
                 NavigationBarItem(
+                    icon = { Icon(Icons.Filled.Book, contentDescription = "Leçons") },
+                    label = { Text("Leçons") },
+                    selected = currentRoute == "lessons",
+                    onClick = {
+                        if (currentRoute != "lessons") {
+                            navController.navigate("lessons") {
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                        unselectedIconColor = Color.White.copy(alpha = 0.7f),
+                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                        unselectedTextColor = Color.White.copy(alpha = 0.7f),
+                        indicatorColor = Color.White.copy(alpha = 0.2f)
+                    )
+                )
+                NavigationBarItem(
                     icon = { Icon(Icons.Filled.AutoAwesome, contentDescription = "Tuteur IA") },
                     label = { Text("Tuteur IA") },
                     selected = currentRoute == "tutor",
@@ -122,7 +144,8 @@ fun AppNavigation(viewModel: TutorViewModel) {
                 startDestination = "home",
                 modifier = Modifier.padding(innerPadding)
             ) {
-                composable("home") { HomeScreen(viewModel) }
+                composable("home") { HomeScreen(viewModel, onNavigateToLessons = { navController.navigate("lessons") }) }
+                composable("lessons") { LessonScreen(viewModel) }
                 composable("tutor") { TutorScreen(viewModel) }
             }
         }
@@ -130,7 +153,10 @@ fun AppNavigation(viewModel: TutorViewModel) {
 }
 
 @Composable
-fun HomeScreen(viewModel: TutorViewModel) {
+fun HomeScreen(
+    viewModel: TutorViewModel,
+    onNavigateToLessons: () -> Unit = {}
+) {
     val dailyWords by viewModel.dailyWords.collectAsStateWithLifecycle()
     val progress by viewModel.userProgress.collectAsStateWithLifecycle()
 
@@ -196,7 +222,7 @@ fun HomeScreen(viewModel: TutorViewModel) {
                     Text("\"L'apprentissage du jour\"", color = Color.White.copy(alpha = 0.6f), fontSize = 14.sp, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
                     Spacer(modifier = Modifier.height(24.dp))
                     Button(
-                        onClick = { },
+                        onClick = { onNavigateToLessons() },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
