@@ -13,10 +13,17 @@ class TutorApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        instance = this
         database = Room.databaseBuilder(
             applicationContext,
             AppDatabase::class.java, "tutor_database"
         ).fallbackToDestructiveMigration().build()
         repository = Repository(database.appDao())
     }
+
+    companion object {
+        lateinit var instance: TutorApp
+            private set
+    }
 }
+

@@ -1,9 +1,11 @@
 package com.example.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.BuildConfig
+import com.example.TutorApp
 import com.example.api.Content
 import com.example.api.GenerateContentRequest
 import com.example.api.Part
@@ -12,6 +14,7 @@ import com.example.data.CompletedLesson
 import com.example.data.Repository
 import com.example.data.UserProgress
 import com.example.data.VocabularyWord
+import com.example.ui.theme.ThemeMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +26,7 @@ import java.util.Calendar
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+
 
 @Serializable
 data class LessonVocab(
@@ -106,6 +110,38 @@ class TutorViewModel(private val repository: Repository) : ViewModel() {
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+
+    private val _themeMode = MutableStateFlow(loadThemeMode())
+    val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
+
+    fun setThemeMode(mode: ThemeMode) {
+        _themeMode.value = mode
+        saveThemeMode(mode)
+    }
+
+    private fun loadThemeMode(): ThemeMode {
+        return try {
+            val prefs = TutorApp.instance.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+            val saved = prefs.getString("theme_mode", ThemeMode.DARK.name) ?: ThemeMode.DARK.name
+            ThemeMode.valueOf(saved)
+        } catch (e: Exception) {
+            ThemeMode.DARK
+        }
+    }
+
+    private fun saveThemeMode(mode: ThemeMode) {
+        try {
+            val prefs = TutorApp.instance.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+            prefs.edit().putString("theme_mode", mode.name).apply()
+        } catch (_: Exception) {}
+    }
+
+    fun clearCompletedLessons() {
+        viewModelScope.launch {
+            repository.clearCompletedLessons()
+        }
+    }
+
 
     private val _selectedMode = MutableStateFlow(TutorMode.CASUAL)
     val selectedMode = _selectedMode.asStateFlow()

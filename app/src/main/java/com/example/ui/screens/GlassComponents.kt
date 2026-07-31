@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -14,14 +15,21 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun BackgroundOrbs() {
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val bgColor = MaterialTheme.colorScheme.background
+    val orb1Color = if (isDark) Color(0xFF4F46E5).copy(alpha = 0.3f) else Color(0xFF818CF8).copy(alpha = 0.2f)
+    val orb2Color = if (isDark) Color(0xFF3B82F6).copy(alpha = 0.2f) else Color(0xFF60A5FA).copy(alpha = 0.15f)
+    val orb3Color = if (isDark) Color(0xFF9333EA).copy(alpha = 0.2f) else Color(0xFFC084FC).copy(alpha = 0.15f)
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0F172A))
+            .background(bgColor)
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val width = size.width
@@ -30,7 +38,7 @@ fun BackgroundOrbs() {
             // Top-Left Orb
             drawCircle(
                 brush = Brush.radialGradient(
-                    colors = listOf(Color(0xFF4F46E5).copy(alpha = 0.3f), Color.Transparent),
+                    colors = listOf(orb1Color, Color.Transparent),
                     center = Offset(0f, 0f),
                     radius = width * 0.6f
                 ),
@@ -41,7 +49,7 @@ fun BackgroundOrbs() {
             // Right Orb
             drawCircle(
                 brush = Brush.radialGradient(
-                    colors = listOf(Color(0xFF3B82F6).copy(alpha = 0.2f), Color.Transparent),
+                    colors = listOf(orb2Color, Color.Transparent),
                     center = Offset(width, height * 0.5f),
                     radius = width * 0.7f
                 ),
@@ -52,7 +60,7 @@ fun BackgroundOrbs() {
             // Bottom-Left Orb
             drawCircle(
                 brush = Brush.radialGradient(
-                    colors = listOf(Color(0xFF9333EA).copy(alpha = 0.2f), Color.Transparent),
+                    colors = listOf(orb3Color, Color.Transparent),
                     center = Offset(width * 0.2f, height * 0.9f),
                     radius = width * 0.5f
                 ),
@@ -69,13 +77,18 @@ fun GlassCard(
     shape: Shape = RoundedCornerShape(24.dp),
     content: @Composable () -> Unit
 ) {
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val cardBg = if (isDark) Color.White.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface
+    val cardBorder = if (isDark) Color.White.copy(alpha = 0.2f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+
     Box(
         modifier = modifier
             .clip(shape)
-            .background(Color.White.copy(alpha = 0.1f))
-            .border(1.dp, Color.White.copy(alpha = 0.2f), shape)
+            .background(cardBg)
+            .border(1.dp, cardBorder, shape)
             .padding(24.dp)
     ) {
         content()
     }
 }
+
