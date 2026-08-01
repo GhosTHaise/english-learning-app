@@ -1,60 +1,66 @@
 package com.example.ui.screens
 
-import android.Manifest
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Bundle
-import android.speech.RecognitionListener
-import android.speech.RecognizerIntent
-import android.speech.SpeechRecognizer
-import android.speech.tts.TextToSpeech
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.MicOff
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.material.icons.filled.VolumeUp
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import com.example.viewmodel.TutorViewModel
+import com.example.viewmodel.ChatMessage
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.*
 import androidx.compose.ui.platform.LocalContext
+import com.example.viewmodel.TutorMode
+import android.widget.Toast
+import androidx.compose.material.icons.Icons
+import android.speech.SpeechRecognizer
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.core.content.ContextCompat
+import android.Manifest
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
+import android.speech.RecognitionListener
+import androidx.compose.foundation.clickable
+import android.os.Bundle
+import android.content.Intent
+import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.foundation.background
+import androidx.compose.material.icons.filled.MicOff
+import android.speech.RecognizerIntent
+import androidx.compose.ui.Modifier
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.viewmodel.ChatMessage
-import com.example.viewmodel.TutorMode
-import com.example.viewmodel.TutorViewModel
+import android.speech.tts.TextToSpeech
 import kotlinx.coroutines.launch
+import android.content.pm.PackageManager
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.border
+import androidx.compose.foundation.text.KeyboardOptions
 import java.util.Locale
+import androidx.compose.ui.unit.sp
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TutorScreen(viewModel: TutorViewModel) {
     val chatHistory by viewModel.chatHistory.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
+
+    val textColor = MaterialTheme.colorScheme.onSurface
+    val subTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val primaryContainer = MaterialTheme.colorScheme.primaryContainer
+    val onPrimaryContainer = MaterialTheme.colorScheme.onPrimaryContainer
+
     val selectedMode by viewModel.selectedMode.collectAsStateWithLifecycle()
     
     var inputText by remember { mutableStateOf("") }
@@ -133,12 +139,12 @@ fun TutorScreen(viewModel: TutorViewModel) {
                     text = "Tuteur IA Vocal",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = textColor
                 )
                 Text(
                     text = "Pratiquez votre accent en temps réel",
                     fontSize = 11.sp,
-                    color = Color.White.copy(alpha = 0.6f)
+                    color = subTextColor
                 )
             }
 
@@ -170,11 +176,11 @@ fun TutorScreen(viewModel: TutorViewModel) {
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))
                         .background(
-                            if (isSelected) Color(0xFF6366F1) else Color.White.copy(alpha = 0.08f)
+                            if (isSelected) androidx.compose.material3.MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
                         )
                         .border(
                             1.dp,
-                            if (isSelected) Color(0xFFA5B4FC) else Color.White.copy(alpha = 0.12f),
+                            if (isSelected) androidx.compose.material3.MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
                             RoundedCornerShape(12.dp)
                         )
                         .clickable { viewModel.selectMode(mode) }
@@ -182,7 +188,7 @@ fun TutorScreen(viewModel: TutorViewModel) {
                 ) {
                     Text(
                         text = mode.title,
-                        color = if (isSelected) Color.White else Color.White.copy(alpha = 0.7f),
+                        color = if (isSelected) textColor else subTextColor,
                         fontSize = 12.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                     )
@@ -235,7 +241,7 @@ fun TutorScreen(viewModel: TutorViewModel) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             "Le tuteur génère sa réponse...",
-                            color = Color.White.copy(alpha = 0.7f),
+                            color = subTextColor,
                             fontSize = 12.sp
                         )
                     }
@@ -251,7 +257,7 @@ fun TutorScreen(viewModel: TutorViewModel) {
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Vitesse audio :", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+            Text("Vitesse audio :", color = subTextColor.copy(alpha = 0.7f), fontSize = 11.sp)
             Spacer(modifier = Modifier.width(8.dp))
             listOf(0.8f to "0.8x Lent", 1.0f to "1.0x Normal", 1.25f to "1.25x Rapide").forEach { (rate, label) ->
                 val isSelected = playbackRate == rate
@@ -259,7 +265,7 @@ fun TutorScreen(viewModel: TutorViewModel) {
                     text = label,
                     fontSize = 10.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                    color = if (isSelected) Color(0xFF60A5FA) else Color.White.copy(alpha = 0.5f),
+                    color = if (isSelected) Color(0xFF60A5FA) else subTextColor.copy(alpha = 0.7f),
                     modifier = Modifier
                         .padding(horizontal = 4.dp)
                         .clickable { playbackRate = rate }
@@ -304,14 +310,14 @@ fun TutorScreen(viewModel: TutorViewModel) {
                     .clip(CircleShape)
                     .background(
                         if (isListening) androidx.compose.ui.graphics.SolidColor(Color(0xFFEF4444)) 
-                        else androidx.compose.ui.graphics.Brush.linearGradient(listOf(Color(0xFF6366F1), Color(0xFF2563EB)))
+                        else androidx.compose.ui.graphics.Brush.linearGradient(listOf(androidx.compose.material3.MaterialTheme.colorScheme.primary, Color(0xFF2563EB)))
                     )
-                    .border(2.dp, Color.White.copy(alpha = 0.2f), CircleShape)
+                    .border(2.dp, MaterialTheme.colorScheme.outline, CircleShape)
             ) {
                 Icon(
                     if (isListening) Icons.Filled.MicOff else Icons.Filled.Mic,
                     contentDescription = "Microphone",
-                    tint = Color.White
+                    tint = textColor
                 )
             }
             
@@ -322,12 +328,12 @@ fun TutorScreen(viewModel: TutorViewModel) {
                 value = inputText,
                 onValueChange = { inputText = it },
                 modifier = Modifier.weight(1f),
-                placeholder = { Text("Tapez votre réponse en anglais...", fontSize = 13.sp, color = Color.White.copy(alpha = 0.5f)) },
+                placeholder = { Text("Tapez votre réponse en anglais...", fontSize = 13.sp, color = subTextColor.copy(alpha = 0.7f)) },
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.White.copy(alpha = 0.12f),
-                    unfocusedContainerColor = Color.White.copy(alpha = 0.12f),
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
+                    focusedContainerColor = MaterialTheme.colorScheme.outlineVariant,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.outlineVariant,
+                    focusedTextColor = textColor,
+                    unfocusedTextColor = textColor,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent
                 ),
@@ -363,7 +369,7 @@ fun TutorScreen(viewModel: TutorViewModel) {
                     .size(48.dp)
                     .background(Color(0xFF3B82F6), CircleShape)
             ) {
-                Icon(Icons.Filled.Send, contentDescription = "Envoyer", tint = Color.White, modifier = Modifier.size(20.dp))
+                Icon(Icons.Filled.Send, contentDescription = "Envoyer", tint = textColor, modifier = Modifier.size(20.dp))
             }
         }
     }
@@ -374,6 +380,13 @@ fun ChatBubble(
     msg: ChatMessage,
     onReplay: (String) -> Unit
 ) {
+
+    val textColor = MaterialTheme.colorScheme.onSurface
+    val subTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val primaryContainer = MaterialTheme.colorScheme.primaryContainer
+    val onPrimaryContainer = MaterialTheme.colorScheme.onPrimaryContainer
+
     val isUser = msg.role == "user"
     Box(
         modifier = Modifier.fillMaxWidth(),
@@ -391,12 +404,12 @@ fun ChatBubble(
                     )
                     .background(
                         if (isUser) androidx.compose.ui.graphics.Brush.linearGradient(
-                            listOf(Color(0xFF6366F1), Color(0xFF3B82F6))
-                        ) else androidx.compose.ui.graphics.SolidColor(Color.White.copy(alpha = 0.12f))
+                            listOf(androidx.compose.material3.MaterialTheme.colorScheme.primary, Color(0xFF3B82F6))
+                        ) else androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outlineVariant)
                     )
                     .border(
                         1.dp,
-                        Color.White.copy(alpha = 0.15f),
+                        MaterialTheme.colorScheme.outlineVariant,
                         if (isUser) RoundedCornerShape(22.dp, 22.dp, 4.dp, 22.dp)
                         else RoundedCornerShape(22.dp, 22.dp, 22.dp, 4.dp)
                     )
@@ -419,7 +432,7 @@ fun ChatBubble(
                             Icon(
                                 imageVector = Icons.Filled.VolumeUp,
                                 contentDescription = "Réécouter",
-                                tint = Color.White.copy(alpha = 0.8f),
+                                tint = textColor.copy(alpha = 0.9f),
                                 modifier = Modifier
                                     .size(18.dp)
                                     .clickable { onReplay(msg.text) }
@@ -430,7 +443,7 @@ fun ChatBubble(
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = msg.text,
-                        color = Color.White,
+                        color = textColor,
                         fontSize = 14.sp,
                         lineHeight = 20.sp
                     )
@@ -453,14 +466,16 @@ private fun startListening(
     }
 
     speechRecognizer.setRecognitionListener(object : RecognitionListener {
-        override fun onReadyForSpeech(params: Bundle?) { setListening(true) }
-        override fun onBeginningOfSpeech() { setListening(true) }
+        override fun onReadyForSpeech(params: Bundle?) {}
+        override fun onBeginningOfSpeech() {}
         override fun onRmsChanged(rmsdB: Float) {
             onRmsChange(rmsdB)
         }
         override fun onBufferReceived(buffer: ByteArray?) {}
-        override fun onEndOfSpeech() { setListening(false) }
-        override fun onError(error: Int) { setListening(false) }
+        override fun onEndOfSpeech() {}
+        override fun onError(error: Int) {
+            setListening(false)
+        }
         override fun onResults(results: Bundle?) {
             setListening(false)
             val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)

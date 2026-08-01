@@ -129,7 +129,7 @@ fun LessonScreen(viewModel: TutorViewModel) {
                         Icon(
                             imageVector = Icons.Filled.Book,
                             contentDescription = null,
-                            tint = Color(0xFFA5B4FC),
+                            tint = androidx.compose.material3.MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -137,32 +137,32 @@ fun LessonScreen(viewModel: TutorViewModel) {
                             text = "Leçons d'Anglais IA",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface
                         )
                     }
                     Text(
                         text = "Générées sur-mesure par Gemini",
                         fontSize = 11.sp,
-                        color = Color.White.copy(alpha = 0.6f)
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
                 }
 
                 Box(
                     modifier = Modifier
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.08f))
-                        .border(1.dp, Color(0xFF6366F1).copy(alpha = 0.4f), CircleShape)
+                        .background(androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                        .border(1.dp, androidx.compose.material3.MaterialTheme.colorScheme.primary.copy(alpha = 0.4f), CircleShape)
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Filled.AutoAwesome,
                             contentDescription = null,
-                            tint = Color(0xFF818CF8),
+                            tint = androidx.compose.material3.MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(12.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("GEMINI 3.5", color = Color(0xFF818CF8), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Text("GEMINI 3.5", color = androidx.compose.material3.MaterialTheme.colorScheme.primary, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -180,8 +180,8 @@ fun LessonScreen(viewModel: TutorViewModel) {
                         modifier = Modifier
                             .weight(1f)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(if (isSelected) Color(0xFF4F46E5) else Color.White.copy(alpha = 0.08f))
-                            .border(1.dp, if (isSelected) Color(0xFFA5B4FC) else Color.White.copy(alpha = 0.12f), RoundedCornerShape(12.dp))
+                            .background(if (isSelected) Color(0xFF4F46E5) else androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                            .border(1.dp, if (isSelected) androidx.compose.material3.MaterialTheme.colorScheme.primary else androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f), RoundedCornerShape(12.dp))
                             .clickable {
                                 selectedLevel = levelCode
                                 val topicName = if (showCustomInput && customTopicText.isNotBlank()) customTopicText else selectedTopic
@@ -194,7 +194,7 @@ fun LessonScreen(viewModel: TutorViewModel) {
                             text = label,
                             fontSize = 11.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isSelected) Color.White else Color.White.copy(alpha = 0.7f)
+                            color = if (isSelected) androidx.compose.material3.MaterialTheme.colorScheme.onSurface else androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
                     }
                 }
@@ -206,7 +206,7 @@ fun LessonScreen(viewModel: TutorViewModel) {
             Column {
                 Text(
                     text = "SÉLECTIONNER UN THÈME",
-                    color = Color(0xFFA5B4FC),
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.primary,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.5.sp,
@@ -222,8 +222,8 @@ fun LessonScreen(viewModel: TutorViewModel) {
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(14.dp))
-                                .background(if (isSelected) Color(0xFF2563EB) else Color.White.copy(alpha = 0.08f))
-                                .border(1.dp, if (isSelected) Color(0xFF93C5FD) else Color.White.copy(alpha = 0.12f), RoundedCornerShape(14.dp))
+                                .background(if (isSelected) androidx.compose.material3.MaterialTheme.colorScheme.primary else androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                                .border(1.dp, if (isSelected) androidx.compose.material3.MaterialTheme.colorScheme.primary else androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f), RoundedCornerShape(14.dp))
                                 .clickable {
                                     showCustomInput = false
                                     selectedTopic = topic
@@ -233,7 +233,7 @@ fun LessonScreen(viewModel: TutorViewModel) {
                         ) {
                             Text(
                                 text = topic,
-                                color = if (isSelected) Color.White else Color.White.copy(alpha = 0.8f),
+                                color = if (isSelected) androidx.compose.material3.MaterialTheme.colorScheme.onSurface else androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                                 fontSize = 12.sp,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                             )
@@ -245,15 +245,15 @@ fun LessonScreen(viewModel: TutorViewModel) {
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(14.dp))
-                                .background(if (showCustomInput) Color(0xFF2563EB) else Color.White.copy(alpha = 0.08f))
-                                .border(1.dp, if (showCustomInput) Color(0xFF93C5FD) else Color.White.copy(alpha = 0.12f), RoundedCornerShape(14.dp))
+                                .background(if (showCustomInput) androidx.compose.material3.MaterialTheme.colorScheme.primary else androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                                .border(1.dp, if (showCustomInput) androidx.compose.material3.MaterialTheme.colorScheme.primary else androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f), RoundedCornerShape(14.dp))
                                 .clickable { showCustomInput = !showCustomInput }
                                 .padding(horizontal = 14.dp, vertical = 8.dp)
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Filled.Search, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                                Icon(Icons.Filled.Search, contentDescription = null, tint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(14.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Autre sujet...", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                                Text("Autre sujet...", color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                             }
                         }
                     }
@@ -271,14 +271,14 @@ fun LessonScreen(viewModel: TutorViewModel) {
                     OutlinedTextField(
                         value = customTopicText,
                         onValueChange = { customTopicText = it },
-                        placeholder = { Text("Ex: Vocabulaire médical, négociation...", color = Color.White.copy(alpha = 0.5f), fontSize = 12.sp) },
+                        placeholder = { Text("Ex: Vocabulaire médical, négociation...", color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), fontSize = 12.sp) },
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            focusedBorderColor = Color(0xFF6366F1),
-                            unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
-                            focusedContainerColor = Color.White.copy(alpha = 0.08f),
-                            unfocusedContainerColor = Color.White.copy(alpha = 0.08f)
+                            focusedTextColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
+                            focusedBorderColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
+                            focusedContainerColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+                            unfocusedContainerColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
                         ),
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.weight(1f)
@@ -314,21 +314,21 @@ fun LessonScreen(viewModel: TutorViewModel) {
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             CircularProgressIndicator(
-                                color = Color(0xFF818CF8),
+                                color = androidx.compose.material3.MaterialTheme.colorScheme.primary,
                                 strokeWidth = 3.dp,
                                 modifier = Modifier.size(42.dp)
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
                                 text = "Génération de la leçon...",
-                                color = Color.White,
+                                color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = "L'IA prépare votre vocabulaire, grammaire et quiz",
-                                color = Color.White.copy(alpha = 0.6f),
+                                color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                                 fontSize = 12.sp
                             )
                         }
@@ -345,14 +345,14 @@ fun LessonScreen(viewModel: TutorViewModel) {
                                 .padding(16.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Icon(Icons.Filled.Error, contentDescription = null, tint = Color(0xFFEF4444), modifier = Modifier.size(36.dp))
+                            Icon(Icons.Filled.Error, contentDescription = null, tint = androidx.compose.material3.MaterialTheme.colorScheme.error, modifier = Modifier.size(36.dp))
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text("Erreur lors du chargement", color = Color.White, fontWeight = FontWeight.Bold)
-                            Text(state.message, color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                            Text("Erreur lors du chargement", color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
+                            Text(state.message, color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontSize = 12.sp)
                             Spacer(modifier = Modifier.height(12.dp))
                             Button(
                                 onClick = { viewModel.generateLesson(selectedTopic, selectedLevel) },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1))
+                                colors = ButtonDefaults.buttonColors(containerColor = androidx.compose.material3.MaterialTheme.colorScheme.primary)
                             ) {
                                 Icon(Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
@@ -377,7 +377,7 @@ fun LessonScreen(viewModel: TutorViewModel) {
                             ) {
                                 Text(
                                     text = lesson.title,
-                                    color = Color.White,
+                                    color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -388,7 +388,7 @@ fun LessonScreen(viewModel: TutorViewModel) {
                                         .background(Color(0xFF3B82F6).copy(alpha = 0.3f))
                                         .padding(horizontal = 8.dp, vertical = 2.dp)
                                 ) {
-                                    Text(lesson.level, color = Color(0xFF93C5FD), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    Text(lesson.level, color = androidx.compose.material3.MaterialTheme.colorScheme.primary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
 
@@ -396,7 +396,7 @@ fun LessonScreen(viewModel: TutorViewModel) {
 
                             Text(
                                 text = lesson.summary,
-                                color = Color.White.copy(alpha = 0.8f),
+                                color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                                 fontSize = 13.sp,
                                 lineHeight = 18.sp
                             )
@@ -409,7 +409,7 @@ fun LessonScreen(viewModel: TutorViewModel) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
                             text = "1. VOCABULAIRE ESSENTIEL",
-                            color = Color(0xFFA5B4FC),
+                            color = androidx.compose.material3.MaterialTheme.colorScheme.primary,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 1.5.sp
@@ -426,7 +426,7 @@ fun LessonScreen(viewModel: TutorViewModel) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             Text(
                                                 text = item.english,
-                                                color = Color.White,
+                                                color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
                                                 fontWeight = FontWeight.Bold,
                                                 fontSize = 16.sp
                                             )
@@ -434,7 +434,7 @@ fun LessonScreen(viewModel: TutorViewModel) {
                                                 Spacer(modifier = Modifier.width(8.dp))
                                                 Text(
                                                     text = item.phonetic,
-                                                    color = Color(0xFF93C5FD),
+                                                    color = androidx.compose.material3.MaterialTheme.colorScheme.primary,
                                                     fontSize = 12.sp
                                                 )
                                             }
@@ -442,7 +442,7 @@ fun LessonScreen(viewModel: TutorViewModel) {
 
                                         Text(
                                             text = item.french,
-                                            color = Color.White.copy(alpha = 0.7f),
+                                            color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                                             fontSize = 13.sp
                                         )
 
@@ -450,7 +450,7 @@ fun LessonScreen(viewModel: TutorViewModel) {
                                             Spacer(modifier = Modifier.height(4.dp))
                                             Text(
                                                 text = "\"${item.example}\"",
-                                                color = Color.White.copy(alpha = 0.5f),
+                                                color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                                                 fontSize = 11.sp,
                                                 fontWeight = FontWeight.Light
                                             )
@@ -464,12 +464,12 @@ fun LessonScreen(viewModel: TutorViewModel) {
                                         modifier = Modifier
                                             .size(36.dp)
                                             .clip(CircleShape)
-                                            .background(Color.White.copy(alpha = 0.1f))
+                                            .background(androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
                                     ) {
                                         Icon(
                                             Icons.Filled.VolumeUp,
                                             contentDescription = "Ecouter",
-                                            tint = Color.White,
+                                            tint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
                                             modifier = Modifier.size(18.dp)
                                         )
                                     }
@@ -485,7 +485,7 @@ fun LessonScreen(viewModel: TutorViewModel) {
                         Column {
                             Text(
                                 text = "2. ASTUCE GRAMMAIRE & STRUCTURE",
-                                color = Color(0xFFA5B4FC),
+                                color = androidx.compose.material3.MaterialTheme.colorScheme.primary,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.5.sp,
@@ -499,25 +499,25 @@ fun LessonScreen(viewModel: TutorViewModel) {
                                     .background(
                                         Brush.linearGradient(
                                             listOf(
-                                                Color(0xFF312E81).copy(alpha = 0.6f),
-                                                Color(0xFF1E1B4B).copy(alpha = 0.8f)
+                                                androidx.compose.material3.MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                                                androidx.compose.material3.MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
                                             )
                                         )
                                     )
-                                    .border(1.dp, Color(0xFF818CF8).copy(alpha = 0.3f), RoundedCornerShape(16.dp))
+                                    .border(1.dp, androidx.compose.material3.MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
                                     .padding(16.dp)
                             ) {
                                 Row(verticalAlignment = Alignment.Top) {
                                     Icon(
                                         imageVector = Icons.Filled.Lightbulb,
                                         contentDescription = null,
-                                        tint = Color(0xFFFBBF24),
+                                        tint = androidx.compose.ui.graphics.Color(0xFFD97706),
                                         modifier = Modifier.size(24.dp)
                                     )
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Text(
                                         text = lesson.grammarRule,
-                                        color = Color.White,
+                                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
                                         fontSize = 13.sp,
                                         lineHeight = 19.sp
                                     )
@@ -533,7 +533,7 @@ fun LessonScreen(viewModel: TutorViewModel) {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
                                 text = "3. DIALOGUE IMMERSIF",
-                                color = Color(0xFFA5B4FC),
+                                color = androidx.compose.material3.MaterialTheme.colorScheme.primary,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.5.sp
@@ -552,18 +552,18 @@ fun LessonScreen(viewModel: TutorViewModel) {
                                                     text = line.speaker,
                                                     fontSize = 11.sp,
                                                     fontWeight = FontWeight.Bold,
-                                                    color = Color(0xFF93C5FD)
+                                                    color = androidx.compose.material3.MaterialTheme.colorScheme.primary
                                                 )
                                                 Text(
                                                     text = line.text,
                                                     fontSize = 14.sp,
                                                     fontWeight = FontWeight.Medium,
-                                                    color = Color.White
+                                                    color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface
                                                 )
                                                 Text(
                                                     text = line.translation,
                                                     fontSize = 12.sp,
-                                                    color = Color.White.copy(alpha = 0.6f)
+                                                    color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                                 )
                                             }
 
@@ -576,7 +576,7 @@ fun LessonScreen(viewModel: TutorViewModel) {
                                                 Icon(
                                                     Icons.Filled.VolumeUp,
                                                     contentDescription = "Écouter la ligne",
-                                                    tint = Color.White.copy(alpha = 0.7f),
+                                                    tint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                                                     modifier = Modifier.size(16.dp)
                                                 )
                                             }
@@ -629,7 +629,7 @@ fun LessonScreen(viewModel: TutorViewModel) {
                     ) {
                         Text(
                             text = "HISTORIQUE DES LEÇONS (${completedLessons.size})",
-                            color = Color(0xFFA5B4FC),
+                            color = androidx.compose.material3.MaterialTheme.colorScheme.primary,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 1.5.sp
@@ -638,7 +638,7 @@ fun LessonScreen(viewModel: TutorViewModel) {
                         val avgScore = completedLessons.map { it.score }.average().toInt()
                         Text(
                             text = "Score moyen: $avgScore%",
-                            color = Color(0xFF4ADE80),
+                            color = androidx.compose.ui.graphics.Color(0xFF22C55E),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -654,14 +654,14 @@ fun LessonScreen(viewModel: TutorViewModel) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = completed.lessonTitle,
-                                        color = Color.White,
+                                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 14.sp
                                     )
                                     Spacer(modifier = Modifier.height(2.dp))
                                     Text(
                                         text = "${completed.topic} • ${completed.level}",
-                                        color = Color.White.copy(alpha = 0.6f),
+                                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                                         fontSize = 11.sp
                                     )
                                 }
@@ -670,14 +670,14 @@ fun LessonScreen(viewModel: TutorViewModel) {
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(8.dp))
                                         .background(
-                                            if (completed.score >= 80) Color(0xFF16A34A).copy(alpha = 0.3f)
+                                            if (completed.score >= 80) androidx.compose.ui.graphics.Color(0xFF22C55E).copy(alpha = 0.3f)
                                             else Color(0xFFD97706).copy(alpha = 0.3f)
                                         )
                                         .padding(horizontal = 10.dp, vertical = 4.dp)
                                 ) {
                                     Text(
                                         text = "${completed.score}/${completed.maxScore}",
-                                        color = if (completed.score >= 80) Color(0xFF4ADE80) else Color(0xFFFBBF24),
+                                        color = if (completed.score >= 80) androidx.compose.ui.graphics.Color(0xFF22C55E) else androidx.compose.ui.graphics.Color(0xFFD97706),
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -705,7 +705,7 @@ fun QuizWidget(
     Column(modifier = Modifier.padding(top = 8.dp)) {
         Text(
             text = "4. QUIZ DE VALIDATION",
-            color = Color(0xFFA5B4FC),
+            color = androidx.compose.material3.MaterialTheme.colorScheme.primary,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 1.5.sp,
@@ -716,7 +716,7 @@ fun QuizWidget(
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = question,
-                    color = Color.White,
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
                     lineHeight = 20.sp
@@ -730,16 +730,16 @@ fun QuizWidget(
 
                     val containerColor = when {
                         !isSubmitted && isSelected -> Color(0xFF4F46E5).copy(alpha = 0.5f)
-                        isSubmitted && isCorrect -> Color(0xFF16A34A).copy(alpha = 0.4f)
-                        isSubmitted && isSelected && !isCorrect -> Color(0xFFDC2626).copy(alpha = 0.4f)
-                        else -> Color.White.copy(alpha = 0.05f)
+                        isSubmitted && isCorrect -> androidx.compose.ui.graphics.Color(0xFF22C55E).copy(alpha = 0.4f)
+                        isSubmitted && isSelected && !isCorrect -> androidx.compose.material3.MaterialTheme.colorScheme.error.copy(alpha = 0.4f)
+                        else -> androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
                     }
 
                     val borderColor = when {
-                        !isSubmitted && isSelected -> Color(0xFFA5B4FC)
-                        isSubmitted && isCorrect -> Color(0xFF4ADE80)
-                        isSubmitted && isSelected && !isCorrect -> Color(0xFFF87171)
-                        else -> Color.White.copy(alpha = 0.1f)
+                        !isSubmitted && isSelected -> androidx.compose.material3.MaterialTheme.colorScheme.primary
+                        isSubmitted && isCorrect -> androidx.compose.ui.graphics.Color(0xFF22C55E)
+                        isSubmitted && isSelected && !isCorrect -> androidx.compose.material3.MaterialTheme.colorScheme.error
+                        else -> androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                     }
 
                     Box(
@@ -757,14 +757,14 @@ fun QuizWidget(
                                 selected = isSelected,
                                 onClick = { if (!isSubmitted) selectedOption = index },
                                 colors = RadioButtonDefaults.colors(
-                                    selectedColor = Color.White,
-                                    unselectedColor = Color.White.copy(alpha = 0.4f)
+                                    selectedColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
+                                    unselectedColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                                 )
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = option,
-                                color = Color.White,
+                                color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
                                 fontSize = 13.sp,
                                 modifier = Modifier.weight(1f)
                             )
@@ -784,8 +784,8 @@ fun QuizWidget(
                         },
                         enabled = selectedOption != null,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF2563EB),
-                            disabledContainerColor = Color.White.copy(alpha = 0.1f)
+                            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
+                            disabledContainerColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                         ),
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth().height(44.dp)
@@ -799,8 +799,8 @@ fun QuizWidget(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
                             .background(
-                                if (userIsCorrect) Color(0xFF16A34A).copy(alpha = 0.2f)
-                                else Color(0xFFDC2626).copy(alpha = 0.2f)
+                                if (userIsCorrect) androidx.compose.ui.graphics.Color(0xFF22C55E).copy(alpha = 0.2f)
+                                else androidx.compose.material3.MaterialTheme.colorScheme.error.copy(alpha = 0.2f)
                             )
                             .padding(12.dp)
                     ) {
@@ -809,14 +809,14 @@ fun QuizWidget(
                                 Icon(
                                     imageVector = if (userIsCorrect) Icons.Filled.CheckCircle else Icons.Filled.Error,
                                     contentDescription = null,
-                                    tint = if (userIsCorrect) Color(0xFF4ADE80) else Color(0xFFF87171),
+                                    tint = if (userIsCorrect) androidx.compose.ui.graphics.Color(0xFF22C55E) else androidx.compose.material3.MaterialTheme.colorScheme.error,
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = if (userIsCorrect) "Bravo ! Réponse correcte !" else "Dommage !",
                                     fontWeight = FontWeight.Bold,
-                                    color = if (userIsCorrect) Color(0xFF4ADE80) else Color(0xFFF87171),
+                                    color = if (userIsCorrect) androidx.compose.ui.graphics.Color(0xFF22C55E) else androidx.compose.material3.MaterialTheme.colorScheme.error,
                                     fontSize = 13.sp
                                 )
                             }
@@ -824,7 +824,7 @@ fun QuizWidget(
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = explanation,
-                                    color = Color.White.copy(alpha = 0.9f),
+                                    color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f),
                                     fontSize = 12.sp,
                                     lineHeight = 16.sp
                                 )
