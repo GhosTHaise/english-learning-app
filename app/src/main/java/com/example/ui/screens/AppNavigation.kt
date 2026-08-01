@@ -168,7 +168,7 @@ fun AppNavigation(viewModel: TutorViewModel) {
             NavHost(
                 navController = navController,
                 startDestination = "home",
-                modifier = Modifier.padding(innerPadding)
+                modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding)
             ) {
                 composable("home") { HomeScreen(viewModel, onNavigateToLessons = { navController.navigate("lessons") }) }
                 composable("lessons") { LessonScreen(viewModel) }
