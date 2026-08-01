@@ -112,14 +112,14 @@ fun SettingsScreen(viewModel: TutorViewModel) {
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
                                 .clickable { viewModel.setThemeMode(mode) },
+                            shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(
                                 containerColor = if (isSelected) primaryColor.copy(alpha = 0.15f)
                                 else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                             ),
                             border = if (isSelected) {
-                                ButtonDefaults.outlinedButtonBorder.copy(brush = androidx.compose.ui.graphics.SolidColor(primaryColor))
+                                androidx.compose.foundation.BorderStroke(1.dp, primaryColor)
                             } else null
                         ) {
                             Row(
