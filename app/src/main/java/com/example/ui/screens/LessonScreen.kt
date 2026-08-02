@@ -180,7 +180,7 @@ fun LessonScreen(viewModel: TutorViewModel) {
                         modifier = Modifier
                             .weight(1f)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(if (isSelected) Color(0xFF4F46E5) else androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                            .background(if (isSelected) androidx.compose.material3.MaterialTheme.colorScheme.primary else androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
                             .border(1.dp, if (isSelected) androidx.compose.material3.MaterialTheme.colorScheme.primary else androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f), RoundedCornerShape(12.dp))
                             .clickable {
                                 selectedLevel = levelCode
@@ -194,7 +194,7 @@ fun LessonScreen(viewModel: TutorViewModel) {
                             text = label,
                             fontSize = 11.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isSelected) androidx.compose.material3.MaterialTheme.colorScheme.onSurface else androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            color = if (isSelected) androidx.compose.material3.MaterialTheme.colorScheme.onPrimary else androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
                     }
                 }
@@ -233,7 +233,7 @@ fun LessonScreen(viewModel: TutorViewModel) {
                         ) {
                             Text(
                                 text = topic,
-                                color = if (isSelected) androidx.compose.material3.MaterialTheme.colorScheme.onSurface else androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                                color = if (isSelected) androidx.compose.material3.MaterialTheme.colorScheme.onPrimary else androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                                 fontSize = 12.sp,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                             )
@@ -292,7 +292,7 @@ fun LessonScreen(viewModel: TutorViewModel) {
                                 viewModel.generateLesson(customTopicText, selectedLevel)
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F46E5)),
+                        colors = ButtonDefaults.buttonColors(containerColor = androidx.compose.material3.MaterialTheme.colorScheme.primary),
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.height(52.dp)
                     ) {
@@ -346,7 +346,7 @@ fun LessonScreen(viewModel: TutorViewModel) {
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Icon(Icons.Filled.Error, contentDescription = null, tint = androidx.compose.material3.MaterialTheme.colorScheme.error, modifier = Modifier.size(36.dp))
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
                             Text("Erreur lors du chargement", color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
                             Text(state.message, color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontSize = 12.sp)
                             Spacer(modifier = Modifier.height(12.dp))
@@ -368,8 +368,7 @@ fun LessonScreen(viewModel: TutorViewModel) {
 
                 // Lesson Hero Header Card
                 item {
-                    GlassCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -378,17 +377,18 @@ fun LessonScreen(viewModel: TutorViewModel) {
                                 Text(
                                     text = lesson.title,
                                     color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.weight(1f)
                                 )
 
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(8.dp))
-                                        .background(Color(0xFF3B82F6).copy(alpha = 0.3f))
+                                        .background(androidx.compose.material3.MaterialTheme.colorScheme.primaryContainer)
                                         .padding(horizontal = 8.dp, vertical = 2.dp)
                                 ) {
-                                    Text(lesson.level, color = androidx.compose.material3.MaterialTheme.colorScheme.primary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    Text(lesson.level, color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimaryContainer, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
 
@@ -402,7 +402,6 @@ fun LessonScreen(viewModel: TutorViewModel) {
                             )
                         }
                     }
-                }
 
                 // Section 1: Vocabulaire Clé
                 item {
@@ -729,7 +728,7 @@ fun QuizWidget(
                     val isCorrect = index == correctIndex
 
                     val containerColor = when {
-                        !isSubmitted && isSelected -> Color(0xFF4F46E5).copy(alpha = 0.5f)
+                        !isSubmitted && isSelected -> androidx.compose.material3.MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
                         isSubmitted && isCorrect -> androidx.compose.ui.graphics.Color(0xFF22C55E).copy(alpha = 0.4f)
                         isSubmitted && isSelected && !isCorrect -> androidx.compose.material3.MaterialTheme.colorScheme.error.copy(alpha = 0.4f)
                         else -> androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)

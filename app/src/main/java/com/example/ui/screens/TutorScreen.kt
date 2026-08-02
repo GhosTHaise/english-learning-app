@@ -151,14 +151,14 @@ fun TutorScreen(viewModel: TutorViewModel) {
             Box(
                 modifier = Modifier
                     .clip(CircleShape)
-                    .background(Color(0xFF22C55E).copy(alpha = 0.2f))
-                    .border(1.dp, Color(0xFF22C55E).copy(alpha = 0.3f), CircleShape)
+                    .background(androidx.compose.ui.graphics.Color(0xFF22C55E).copy(alpha = 0.2f))
+                    .border(1.dp, androidx.compose.ui.graphics.Color(0xFF22C55E).copy(alpha = 0.3f), CircleShape)
                     .padding(horizontal = 10.dp, vertical = 4.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.AutoAwesome, contentDescription = null, tint = Color(0xFF4ADE80), modifier = Modifier.size(12.dp))
+                    Icon(Icons.Filled.AutoAwesome, contentDescription = null, tint = androidx.compose.ui.graphics.Color(0xFF4ADE80), modifier = Modifier.size(12.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("GEMINI LIVE", color = Color(0xFF4ADE80), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    Text("GEMINI LIVE", color = androidx.compose.ui.graphics.Color(0xFF4ADE80), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -188,7 +188,7 @@ fun TutorScreen(viewModel: TutorViewModel) {
                 ) {
                     Text(
                         text = mode.title,
-                        color = if (isSelected) textColor else subTextColor,
+                        color = if (isSelected) androidx.compose.material3.MaterialTheme.colorScheme.onPrimary else subTextColor,
                         fontSize = 12.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                     )
@@ -234,7 +234,7 @@ fun TutorScreen(viewModel: TutorViewModel) {
                         modifier = Modifier.padding(8.dp)
                     ) {
                         CircularProgressIndicator(
-                            color = Color(0xFF60A5FA),
+                            color = androidx.compose.material3.MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(18.dp),
                             strokeWidth = 2.dp
                         )
@@ -265,7 +265,7 @@ fun TutorScreen(viewModel: TutorViewModel) {
                     text = label,
                     fontSize = 10.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                    color = if (isSelected) Color(0xFF60A5FA) else subTextColor.copy(alpha = 0.7f),
+                    color = if (isSelected) androidx.compose.material3.MaterialTheme.colorScheme.primary else subTextColor.copy(alpha = 0.7f),
                     modifier = Modifier
                         .padding(horizontal = 4.dp)
                         .clickable { playbackRate = rate }
@@ -310,7 +310,7 @@ fun TutorScreen(viewModel: TutorViewModel) {
                     .clip(CircleShape)
                     .background(
                         if (isListening) androidx.compose.ui.graphics.SolidColor(Color(0xFFEF4444)) 
-                        else androidx.compose.ui.graphics.Brush.linearGradient(listOf(androidx.compose.material3.MaterialTheme.colorScheme.primary, Color(0xFF2563EB)))
+                        else androidx.compose.ui.graphics.Brush.linearGradient(listOf(androidx.compose.material3.MaterialTheme.colorScheme.primary, androidx.compose.material3.MaterialTheme.colorScheme.primary))
                     )
                     .border(2.dp, MaterialTheme.colorScheme.outline, CircleShape)
             ) {
@@ -367,7 +367,7 @@ fun TutorScreen(viewModel: TutorViewModel) {
                 },
                 modifier = Modifier
                     .size(48.dp)
-                    .background(Color(0xFF3B82F6), CircleShape)
+                    .background(androidx.compose.material3.MaterialTheme.colorScheme.primary, CircleShape)
             ) {
                 Icon(Icons.Filled.Send, contentDescription = "Envoyer", tint = textColor, modifier = Modifier.size(20.dp))
             }
@@ -404,7 +404,7 @@ fun ChatBubble(
                     )
                     .background(
                         if (isUser) androidx.compose.ui.graphics.Brush.linearGradient(
-                            listOf(androidx.compose.material3.MaterialTheme.colorScheme.primary, Color(0xFF3B82F6))
+                            listOf(androidx.compose.material3.MaterialTheme.colorScheme.primary, androidx.compose.material3.MaterialTheme.colorScheme.primary)
                         ) else androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outlineVariant)
                     )
                     .border(
@@ -425,7 +425,7 @@ fun ChatBubble(
                             text = if (isUser) "Vous" else "Tuteur IA",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (isUser) Color(0xFFE0E7FF) else Color(0xFF93C5FD)
+                            color = if (isUser) androidx.compose.material3.MaterialTheme.colorScheme.onPrimary else androidx.compose.material3.MaterialTheme.colorScheme.primary
                         )
 
                         if (!isUser) {

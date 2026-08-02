@@ -74,11 +74,12 @@ fun BackgroundOrbs() {
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(24.dp),
+    shape: Shape = RoundedCornerShape(16.dp),
+    contentPadding: androidx.compose.ui.unit.Dp = 16.dp,
     content: @Composable () -> Unit
 ) {
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
-    val cardBg = if (isDark) Color.White.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface
+    val cardBg = if (isDark) Color.White.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface.copy(alpha = 0.85f)
     val cardBorder = if (isDark) Color.White.copy(alpha = 0.2f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
 
     Box(
@@ -86,7 +87,7 @@ fun GlassCard(
             .clip(shape)
             .background(cardBg)
             .border(1.dp, cardBorder, shape)
-            .padding(24.dp)
+            .padding(contentPadding)
     ) {
         content()
     }
