@@ -15,7 +15,8 @@ data class VocabularyWord(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val english: String,
     val french: String,
-    val isLearned: Boolean = false
+    val isLearned: Boolean = false,
+    val timestamp: Long = System.currentTimeMillis()
 )
 
 @Entity(tableName = "user_progress")
@@ -43,8 +44,11 @@ interface AppDao {
     @Query("SELECT * FROM vocabulary ORDER BY id ASC")
     fun getAllWords(): Flow<List<VocabularyWord>>
 
-    @Query("SELECT * FROM vocabulary WHERE isLearned = 0 LIMIT 10")
+    @Query("SELECT * FROM vocabulary WHERE isLearned = 0 ORDER BY id DESC LIMIT 5")
     fun getDailyWords(): Flow<List<VocabularyWord>>
+
+    @Query("SELECT * FROM vocabulary WHERE timestamp >= :sevenDaysAgo ORDER BY timestamp DESC")
+    fun getHistoryWords(sevenDaysAgo: Long): Flow<List<VocabularyWord>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWords(words: List<VocabularyWord>)
@@ -76,10 +80,11 @@ abstract class AppDatabase : RoomDatabase() {
 class Repository(private val dao: AppDao) {
     val allWords = dao.getAllWords()
     val dailyWords = dao.getDailyWords()
+    fun getHistoryWords(sevenDaysAgo: Long) = dao.getHistoryWords(sevenDaysAgo)
     val userProgress = dao.getUserProgress()
     val completedLessons = dao.getAllCompletedLessons()
 
-    suspend fun insertInitialWordsIfEmpty(words: List<VocabularyWord>) {
+    suspend fun insertWords(words: List<VocabularyWord>) {
         dao.insertWords(words)
     }
 

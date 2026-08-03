@@ -8,6 +8,7 @@ import com.example.BuildConfig
 import com.example.TutorApp
 import com.example.api.Content
 import com.example.api.GenerateContentRequest
+import com.example.api.GenerationConfig
 import com.example.api.Part
 import com.example.api.RetrofitClient
 import com.example.data.CompletedLesson
@@ -97,6 +98,13 @@ class TutorViewModel(private val repository: Repository) : ViewModel() {
             initialValue = emptyList()
         )
         
+    val historyWords: StateFlow<List<VocabularyWord>> = repository.getHistoryWords(System.currentTimeMillis() - 7L * 24 * 60 * 60 * 1000)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+        
     val userProgress: StateFlow<UserProgress?> = repository.userProgress
         .stateIn(
             scope = viewModelScope,
@@ -169,26 +177,18 @@ class TutorViewModel(private val repository: Repository) : ViewModel() {
         initDatabase()
     }
 
+    private var databaseInitialized = false
+
     private fun initDatabase() {
+        if (databaseInitialized) return
+        databaseInitialized = true
+        
         viewModelScope.launch {
-            val words = listOf(
-                VocabularyWord(english = "Hello", french = "Bonjour"),
-                VocabularyWord(english = "Thank you", french = "Merci"),
-                VocabularyWord(english = "Please", french = "S'il vous plaît"),
-                VocabularyWord(english = "Goodbye", french = "Au revoir"),
-                VocabularyWord(english = "Yes", french = "Oui"),
-                VocabularyWord(english = "No", french = "Non"),
-                VocabularyWord(english = "How are you?", french = "Comment allez-vous ?"),
-                VocabularyWord(english = "Good morning", french = "Bonjour"),
-                VocabularyWord(english = "Good night", french = "Bonne nuit"),
-                VocabularyWord(english = "Water", french = "Eau")
-            )
-            repository.insertInitialWordsIfEmpty(words)
-            
             // Check streak
             repository.userProgress.collect { progress ->
                 if (progress == null) {
-                    repository.saveUserProgress(UserProgress())
+                    repository.saveUserProgress(UserProgress(lastLoginTimestamp = System.currentTimeMillis()))
+                    generateDailyVocabulary()
                 } else {
                     val lastLogin = progress.lastLoginTimestamp
                     val now = System.currentTimeMillis()
@@ -196,8 +196,9 @@ class TutorViewModel(private val repository: Repository) : ViewModel() {
                     val cal1 = Calendar.getInstance().apply { timeInMillis = lastLogin }
                     val cal2 = Calendar.getInstance().apply { timeInMillis = now }
                     
-                    if (cal1.get(Calendar.DAY_OF_YEAR) != cal2.get(Calendar.DAY_OF_YEAR)) {
+                    if (cal1.get(Calendar.DAY_OF_YEAR) != cal2.get(Calendar.DAY_OF_YEAR) || cal1.get(Calendar.YEAR) != cal2.get(Calendar.YEAR)) {
                         // Different day
+                        generateDailyVocabulary()
                         if (cal2.get(Calendar.DAY_OF_YEAR) - cal1.get(Calendar.DAY_OF_YEAR) == 1 ||
                             (cal2.get(Calendar.YEAR) > cal1.get(Calendar.YEAR))) {
                             // Consecutive day
@@ -264,6 +265,60 @@ class TutorViewModel(private val repository: Repository) : ViewModel() {
                 _error.value = "Failed to connect to AI: ${e.message}"
             } finally {
                 _isLoading.value = false
+            }
+        }
+    }
+
+    
+    private fun generateDailyVocabulary() {
+        viewModelScope.launch {
+            val apiKey = BuildConfig.GEMINI_API_KEY
+            if (apiKey.isEmpty() || apiKey == "MY_GEMINI_API_KEY") {
+                val words = listOf(
+                    VocabularyWord(english = "Hello", french = "Bonjour"),
+                    VocabularyWord(english = "Thank you", french = "Merci"),
+                    VocabularyWord(english = "Please", french = "S'il vous plaît"),
+                    VocabularyWord(english = "Goodbye", french = "Au revoir"),
+                    VocabularyWord(english = "Yes", french = "Oui")
+                )
+                repository.insertWords(words)
+                return@launch
+            }
+            
+            try {
+                val promptText = """
+                    Generate 5 useful daily English vocabulary words for a French speaker.
+                    Return ONLY a valid JSON array of objects without markdown blocks, with these exact fields:
+                    [
+                        {"english": "word1", "french": "traduction1"}
+                    ]
+                """.trimIndent()
+
+                val request = GenerateContentRequest(
+                    contents = listOf(Content(parts = listOf(Part(text = promptText)))),
+                    generationConfig = GenerationConfig(responseModalities = listOf("TEXT"))
+                )
+
+                val response = RetrofitClient.service.generateContent(apiKey, request)
+                val aiText = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text ?: ""
+                
+                val cleanedJson = aiText.trim().removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
+                val jsonArray = org.json.JSONArray(cleanedJson)
+                val newWords = mutableListOf<VocabularyWord>()
+                for (i in 0 until jsonArray.length()) {
+                    val obj = jsonArray.getJSONObject(i)
+                    newWords.add(VocabularyWord(
+                        english = obj.optString("english", ""),
+                        french = obj.optString("french", ""),
+                        isLearned = false
+                    ))
+                }
+                
+                if (newWords.isNotEmpty()) {
+                    repository.insertWords(newWords)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }

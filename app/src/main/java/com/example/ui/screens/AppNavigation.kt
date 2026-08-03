@@ -185,6 +185,7 @@ fun HomeScreen(
     onNavigateToLessons: () -> Unit = {}
 ) {
     val dailyWords by viewModel.dailyWords.collectAsStateWithLifecycle()
+    val historyWords by viewModel.historyWords.collectAsStateWithLifecycle()
     val progress by viewModel.userProgress.collectAsStateWithLifecycle()
 
     val textColor = MaterialTheme.colorScheme.onBackground
@@ -293,6 +294,43 @@ fun HomeScreen(
                             Icons.Filled.Check, 
                             contentDescription = "Marquer comme appris", 
                             tint = if (word.isLearned) Color.White else primaryColor
+                        )
+                    }
+                }
+            }
+        }
+
+        if (historyWords.isNotEmpty()) {
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "HISTORIQUE (7 DERNIERS JOURS)",
+                    color = primaryColor,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.5.sp,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+                )
+            }
+            items(historyWords) { word ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(text = word.english, color = textColor, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text(text = word.french, color = subTextColor, fontSize = 14.sp)
+                    }
+                    if (word.isLearned) {
+                        Icon(
+                            Icons.Filled.Check,
+                            contentDescription = "Appris",
+                            tint = Color(0xFF22C55E)
                         )
                     }
                 }
