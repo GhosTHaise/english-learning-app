@@ -72,6 +72,7 @@ fun TutorScreen(viewModel: TutorViewModel) {
     var playbackRate by remember { mutableStateOf(1.0f) }
     
     val listState = rememberLazyListState()
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     
     val speechRecognizer = remember { SpeechRecognizer.createSpeechRecognizer(context) }
 

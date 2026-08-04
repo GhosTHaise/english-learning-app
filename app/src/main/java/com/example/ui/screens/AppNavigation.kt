@@ -184,6 +184,7 @@ fun HomeScreen(
     viewModel: TutorViewModel,
     onNavigateToLessons: () -> Unit = {}
 ) {
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     val dailyWords by viewModel.dailyWords.collectAsStateWithLifecycle()
     val historyWords by viewModel.historyWords.collectAsStateWithLifecycle()
     val progress by viewModel.userProgress.collectAsStateWithLifecycle()
@@ -282,7 +283,10 @@ fun HomeScreen(
                         Text(text = word.french, color = subTextColor, fontSize = 16.sp)
                     }
                     IconButton(
-                        onClick = { viewModel.markWordAsLearned(word) },
+                        onClick = { 
+                            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                            viewModel.markWordAsLearned(word) 
+                        },
                         modifier = Modifier
                             .background(
                                 if (word.isLearned) Color(0xFF22C55E).copy(alpha = 0.6f) 

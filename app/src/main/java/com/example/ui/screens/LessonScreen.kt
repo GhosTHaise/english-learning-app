@@ -698,6 +698,7 @@ fun QuizWidget(
     explanation: String,
     onQuizCompleted: (userIsCorrect: Boolean) -> Unit = {}
 ) {
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     var selectedOption by remember(question) { mutableStateOf<Int?>(null) }
     var isSubmitted by remember(question) { mutableStateOf(false) }
 
@@ -777,6 +778,7 @@ fun QuizWidget(
                     Button(
                         onClick = {
                             if (selectedOption != null) {
+                                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
                                 isSubmitted = true
                                 onQuizCompleted(selectedOption == correctIndex)
                             }
