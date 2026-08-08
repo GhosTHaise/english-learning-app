@@ -31,6 +31,15 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Stop
+import java.io.File
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -456,21 +465,25 @@ fun LessonScreen(viewModel: TutorViewModel) {
                                         }
                                     }
 
-                                    IconButton(
-                                        onClick = {
-                                            tts?.speak(item.english, TextToSpeech.QUEUE_FLUSH, null, null)
-                                        },
-                                        modifier = Modifier
-                                            .size(36.dp)
-                                            .clip(CircleShape)
-                                            .background(androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
-                                    ) {
-                                        Icon(
-                                            Icons.Filled.VolumeUp,
-                                            contentDescription = "Ecouter",
-                                            tint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                                            modifier = Modifier.size(18.dp)
-                                        )
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        PronunciationButton()
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        IconButton(
+                                            onClick = {
+                                                tts?.speak(item.english, TextToSpeech.QUEUE_FLUSH, null, null)
+                                            },
+                                            modifier = Modifier
+                                                .size(36.dp)
+                                                .clip(CircleShape)
+                                                .background(androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+                                        ) {
+                                            Icon(
+                                                Icons.Filled.VolumeUp,
+                                                contentDescription = "Ecouter",
+                                                tint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -566,18 +579,22 @@ fun LessonScreen(viewModel: TutorViewModel) {
                                                 )
                                             }
 
-                                            IconButton(
-                                                onClick = {
-                                                    tts?.speak(line.text, TextToSpeech.QUEUE_FLUSH, null, null)
-                                                },
-                                                modifier = Modifier.size(32.dp)
-                                            ) {
-                                                Icon(
-                                                    Icons.Filled.VolumeUp,
-                                                    contentDescription = "Écouter la ligne",
-                                                    tint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                                                    modifier = Modifier.size(16.dp)
-                                                )
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                PronunciationButton()
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                IconButton(
+                                                    onClick = {
+                                                        tts?.speak(line.text, TextToSpeech.QUEUE_FLUSH, null, null)
+                                                    },
+                                                    modifier = Modifier.size(32.dp)
+                                                ) {
+                                                    Icon(
+                                                        Icons.Filled.VolumeUp,
+                                                        contentDescription = "Écouter la ligne",
+                                                        tint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                                        modifier = Modifier.size(16.dp)
+                                                    )
+                                                }
                                             }
                                         }
                                     }
@@ -835,5 +852,132 @@ fun QuizWidget(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun PronunciationButton() {
+    val context = LocalContext.current
+    var state by remember { mutableStateOf(0) } // 0 = idle, 1 = recording, 2 = playing
+    val audioFile = remember { File(context.cacheDir, "pronunciation_${System.nanoTime()}.3gp") }
+    var mediaRecorder by remember { mutableStateOf<android.media.MediaRecorder?>(null) }
+    var mediaPlayer by remember { mutableStateOf<android.media.MediaPlayer?>(null) }
+    
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (isGranted) {
+            state = 1
+            mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                android.media.MediaRecorder(context)
+            } else {
+                android.media.MediaRecorder()
+            }.apply {
+                setAudioSource(android.media.MediaRecorder.AudioSource.MIC)
+                setOutputFormat(android.media.MediaRecorder.OutputFormat.THREE_GPP)
+                setAudioEncoder(android.media.MediaRecorder.AudioEncoder.AMR_NB)
+                setOutputFile(audioFile.absolutePath)
+                try {
+                    prepare()
+                    start()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    state = 0
+                }
+            }
+        }
+    }
+    
+    DisposableEffect(Unit) {
+        onDispose {
+            try {
+                mediaRecorder?.release()
+                mediaPlayer?.release()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+    
+    IconButton(
+        onClick = {
+            when (state) {
+                0 -> { // Start recording
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                        state = 1
+                        mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            android.media.MediaRecorder(context)
+                        } else {
+                            android.media.MediaRecorder()
+                        }.apply {
+                            setAudioSource(android.media.MediaRecorder.AudioSource.MIC)
+                            setOutputFormat(android.media.MediaRecorder.OutputFormat.THREE_GPP)
+                            setAudioEncoder(android.media.MediaRecorder.AudioEncoder.AMR_NB)
+                            setOutputFile(audioFile.absolutePath)
+                            try {
+                                prepare()
+                                start()
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                                state = 0
+                            }
+                        }
+                    } else {
+                        launcher.launch(Manifest.permission.RECORD_AUDIO)
+                    }
+                }
+                1 -> { // Stop recording
+                    try {
+                        mediaRecorder?.stop()
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                    mediaRecorder?.release()
+                    mediaRecorder = null
+                    state = 2
+                    
+                    mediaPlayer = android.media.MediaPlayer().apply {
+                        try {
+                            setDataSource(audioFile.absolutePath)
+                            prepare()
+                            start()
+                            setOnCompletionListener {
+                                state = 0
+                                release()
+                                mediaPlayer = null
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            state = 0
+                        }
+                    }
+                }
+                2 -> { // Stop playback
+                    mediaPlayer?.apply {
+                        if (isPlaying) stop()
+                        release()
+                    }
+                    mediaPlayer = null
+                    state = 0
+                }
+            }
+        },
+        modifier = Modifier
+            .size(36.dp)
+            .clip(CircleShape)
+            .background(
+                if (state == 1) Color.Red.copy(alpha=0.15f)
+                else if (state == 2) androidx.compose.material3.MaterialTheme.colorScheme.primary.copy(alpha=0.15f)
+                else androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+            )
+    ) {
+        Icon(
+            imageVector = when(state) {
+                0 -> Icons.Filled.Mic
+                1 -> Icons.Filled.Stop
+                else -> Icons.Filled.VolumeUp
+            },
+            contentDescription = if (state == 1) "Arrêter l'enregistrement" else "Tester ma prononciation",
+            tint = if (state == 1) Color.Red else androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(18.dp)
+        )
     }
 }
