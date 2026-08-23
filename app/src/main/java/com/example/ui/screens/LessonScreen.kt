@@ -466,7 +466,11 @@ fun LessonScreen(viewModel: TutorViewModel) {
                                     }
 
                                     Row(verticalAlignment = Alignment.CenterVertically) {
-                                        PronunciationButton()
+                                        PronunciationButton(
+                                            targetText = item.english,
+                                            phonetic = item.phonetic,
+                                            translation = item.french
+                                        )
                                         Spacer(modifier = Modifier.width(8.dp))
                                         IconButton(
                                             onClick = {
@@ -580,7 +584,11 @@ fun LessonScreen(viewModel: TutorViewModel) {
                                             }
 
                                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                                PronunciationButton()
+                                                PronunciationButton(
+                                                    targetText = line.text,
+                                                    phonetic = "",
+                                                    translation = line.translation
+                                                )
                                                 Spacer(modifier = Modifier.width(4.dp))
                                                 IconButton(
                                                     onClick = {
@@ -856,127 +864,33 @@ fun QuizWidget(
 }
 
 @Composable
-fun PronunciationButton() {
-    val context = LocalContext.current
-    var state by remember { mutableStateOf(0) } // 0 = idle, 1 = recording, 2 = playing
-    val audioFile = remember { File(context.cacheDir, "pronunciation_${System.nanoTime()}.3gp") }
-    var mediaRecorder by remember { mutableStateOf<android.media.MediaRecorder?>(null) }
-    var mediaPlayer by remember { mutableStateOf<android.media.MediaPlayer?>(null) }
-    
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-        if (isGranted) {
-            state = 1
-            mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                android.media.MediaRecorder(context)
-            } else {
-                android.media.MediaRecorder()
-            }.apply {
-                setAudioSource(android.media.MediaRecorder.AudioSource.MIC)
-                setOutputFormat(android.media.MediaRecorder.OutputFormat.THREE_GPP)
-                setAudioEncoder(android.media.MediaRecorder.AudioEncoder.AMR_NB)
-                setOutputFile(audioFile.absolutePath)
-                try {
-                    prepare()
-                    start()
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    state = 0
-                }
-            }
-        }
+fun PronunciationButton(
+    targetText: String,
+    phonetic: String = "",
+    translation: String = ""
+) {
+    var showDialog by remember { mutableStateOf(false) }
+
+    if (showDialog) {
+        PronunciationComparisonDialog(
+            targetText = targetText,
+            phonetic = phonetic,
+            translation = translation,
+            onDismiss = { showDialog = false }
+        )
     }
-    
-    DisposableEffect(Unit) {
-        onDispose {
-            try {
-                mediaRecorder?.release()
-                mediaPlayer?.release()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-    }
-    
+
     IconButton(
-        onClick = {
-            when (state) {
-                0 -> { // Start recording
-                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-                        state = 1
-                        mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                            android.media.MediaRecorder(context)
-                        } else {
-                            android.media.MediaRecorder()
-                        }.apply {
-                            setAudioSource(android.media.MediaRecorder.AudioSource.MIC)
-                            setOutputFormat(android.media.MediaRecorder.OutputFormat.THREE_GPP)
-                            setAudioEncoder(android.media.MediaRecorder.AudioEncoder.AMR_NB)
-                            setOutputFile(audioFile.absolutePath)
-                            try {
-                                prepare()
-                                start()
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                                state = 0
-                            }
-                        }
-                    } else {
-                        launcher.launch(Manifest.permission.RECORD_AUDIO)
-                    }
-                }
-                1 -> { // Stop recording
-                    try {
-                        mediaRecorder?.stop()
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                    mediaRecorder?.release()
-                    mediaRecorder = null
-                    state = 2
-                    
-                    mediaPlayer = android.media.MediaPlayer().apply {
-                        try {
-                            setDataSource(audioFile.absolutePath)
-                            prepare()
-                            start()
-                            setOnCompletionListener {
-                                state = 0
-                                release()
-                                mediaPlayer = null
-                            }
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                            state = 0
-                        }
-                    }
-                }
-                2 -> { // Stop playback
-                    mediaPlayer?.apply {
-                        if (isPlaying) stop()
-                        release()
-                    }
-                    mediaPlayer = null
-                    state = 0
-                }
-            }
-        },
+        onClick = { showDialog = true },
         modifier = Modifier
             .size(36.dp)
             .clip(CircleShape)
-            .background(
-                if (state == 1) Color.Red.copy(alpha=0.15f)
-                else if (state == 2) androidx.compose.material3.MaterialTheme.colorScheme.primary.copy(alpha=0.15f)
-                else androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-            )
+            .background(androidx.compose.material3.MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
     ) {
         Icon(
-            imageVector = when(state) {
-                0 -> Icons.Filled.Mic
-                1 -> Icons.Filled.Stop
-                else -> Icons.Filled.VolumeUp
-            },
-            contentDescription = if (state == 1) "Arrêter l'enregistrement" else "Tester ma prononciation",
-            tint = if (state == 1) Color.Red else androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
+            imageVector = Icons.Filled.Mic,
+            contentDescription = "Analyser ma prononciation et voir la comparaison",
+            tint = androidx.compose.material3.MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(18.dp)
         )
     }

@@ -278,27 +278,36 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
-                        Text(text = word.english, color = textColor, fontWeight = FontWeight.Bold, fontSize = 22.sp)
-                        Text(text = word.french, color = subTextColor, fontSize = 16.sp)
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = word.english, color = textColor, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                        Text(text = word.french, color = subTextColor, fontSize = 14.sp)
                     }
-                    IconButton(
-                        onClick = { 
-                            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
-                            viewModel.markWordAsLearned(word) 
-                        },
-                        modifier = Modifier
-                            .background(
-                                if (word.isLearned) Color(0xFF22C55E).copy(alpha = 0.6f) 
-                                else primaryColor.copy(alpha = 0.15f), 
-                                CircleShape
-                            )
-                    ) {
-                        Icon(
-                            Icons.Filled.Check, 
-                            contentDescription = "Marquer comme appris", 
-                            tint = if (word.isLearned) Color.White else primaryColor
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        PronunciationButton(
+                            targetText = word.english,
+                            translation = word.french
                         )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        IconButton(
+                            onClick = { 
+                                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                                viewModel.markWordAsLearned(word) 
+                            },
+                            modifier = Modifier
+                                .size(36.dp)
+                                .background(
+                                    if (word.isLearned) Color(0xFF22C55E).copy(alpha = 0.6f) 
+                                    else primaryColor.copy(alpha = 0.15f), 
+                                    CircleShape
+                                )
+                        ) {
+                            Icon(
+                                Icons.Filled.Check, 
+                                contentDescription = "Marquer comme appris", 
+                                tint = if (word.isLearned) Color.White else primaryColor,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                 }
             }
