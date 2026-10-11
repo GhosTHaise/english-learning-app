@@ -12,6 +12,13 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
+import com.example.TutorApp
+import com.example.data.DailyPracticeLog
+import com.example.data.UserProgress
+import kotlinx.coroutines.flow.firstOrNull
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -311,6 +318,50 @@ fun PronunciationComparisonContent(
             onEvaluated = { score ->
                 scoreResult = score
                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                scope.launch {
+                    try {
+                        val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+                        val repo = TutorApp.instance.repository
+                        val existingLog = repo.getPracticeLogForDate(today)
+                        val desc = "Prononciation : $targetText (${score.overall}%)"
+                        if (existingLog != null) {
+                            repo.insertPracticeLog(
+                                existingLog.copy(
+                                    practiceCount = existingLog.practiceCount + 1,
+                                    activitiesSummary = "${existingLog.activitiesSummary}, $desc",
+                                    timestamp = System.currentTimeMillis()
+                                )
+                            )
+                        } else {
+                            repo.insertPracticeLog(
+                                DailyPracticeLog(
+                                    date = today,
+                                    practiceCount = 1,
+                                    activitiesSummary = desc,
+                                    timestamp = System.currentTimeMillis()
+                                )
+                            )
+                        }
+                        val progress = repo.userProgress.firstOrNull() ?: UserProgress()
+                        if (progress.lastPracticedDate != today) {
+                            val newStreak = if (progress.lastPracticedDate.isBlank()) 1 else {
+                                val d1 = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(progress.lastPracticedDate)
+                                val d2 = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(today)
+                                val diff = if (d1 != null && d2 != null) (d2.time - d1.time) / (24L * 60 * 60 * 1000) else 99L
+                                if (diff == 1L) progress.currentStreak + 1 else 1
+                            }
+                            repo.saveUserProgress(
+                                progress.copy(
+                                    currentStreak = newStreak,
+                                    longestStreak = maxOf(progress.longestStreak, newStreak),
+                                    lastPracticedDate = today,
+                                    totalPracticeDays = progress.totalPracticeDays + 1,
+                                    lastLoginTimestamp = System.currentTimeMillis()
+                                )
+                            )
+                        }
+                    } catch (_: Exception) {}
+                }
             }
         )
     }

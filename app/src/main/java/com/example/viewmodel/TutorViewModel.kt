@@ -12,6 +12,7 @@ import com.example.api.GenerationConfig
 import com.example.api.Part
 import com.example.api.RetrofitClient
 import com.example.data.CompletedLesson
+import com.example.data.DailyPracticeLog
 import com.example.data.Repository
 import com.example.data.UserProgress
 import com.example.data.VocabularyWord
@@ -20,10 +21,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -119,6 +124,42 @@ class TutorViewModel(private val repository: Repository) : ViewModel() {
             initialValue = emptyList()
         )
 
+    val dailyPracticeLogs: StateFlow<List<DailyPracticeLog>> = repository.dailyPracticeLogs
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    private val _streakCelebrationMessage = MutableStateFlow<String?>(null)
+    val streakCelebrationMessage: StateFlow<String?> = _streakCelebrationMessage.asStateFlow()
+
+    fun clearCelebrationMessage() {
+        _streakCelebrationMessage.value = null
+    }
+
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+
+    fun getTodayDateString(): String = dateFormat.format(Date())
+
+    fun calculateDaysDiff(fromDateStr: String, toDateStr: String): Long {
+        if (fromDateStr.isBlank() || toDateStr.isBlank()) return Long.MAX_VALUE
+        return try {
+            val d1 = dateFormat.parse(fromDateStr) ?: return Long.MAX_VALUE
+            val d2 = dateFormat.parse(toDateStr) ?: return Long.MAX_VALUE
+            val diff = d2.time - d1.time
+            diff / (24L * 60 * 60 * 1000)
+        } catch (e: Exception) {
+            Long.MAX_VALUE
+        }
+    }
+
+    fun getDaysAgoDateString(daysAgo: Int): String {
+        val cal = Calendar.getInstance()
+        cal.add(Calendar.DAY_OF_YEAR, -daysAgo)
+        return dateFormat.format(cal.time)
+    }
+
     private val _themeMode = MutableStateFlow(loadThemeMode())
     val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
 
@@ -184,32 +225,174 @@ class TutorViewModel(private val repository: Repository) : ViewModel() {
         databaseInitialized = true
         
         viewModelScope.launch {
-            // Check streak
-            repository.userProgress.collect { progress ->
-                if (progress == null) {
-                    repository.saveUserProgress(UserProgress(lastLoginTimestamp = System.currentTimeMillis()))
-                    generateDailyVocabulary()
-                } else {
-                    val lastLogin = progress.lastLoginTimestamp
-                    val now = System.currentTimeMillis()
-                    // Simple streak logic: if more than 24h passed, check if it's the next day
-                    val cal1 = Calendar.getInstance().apply { timeInMillis = lastLogin }
-                    val cal2 = Calendar.getInstance().apply { timeInMillis = now }
-                    
-                    if (cal1.get(Calendar.DAY_OF_YEAR) != cal2.get(Calendar.DAY_OF_YEAR) || cal1.get(Calendar.YEAR) != cal2.get(Calendar.YEAR)) {
-                        // Different day
-                        generateDailyVocabulary()
-                        if (cal2.get(Calendar.DAY_OF_YEAR) - cal1.get(Calendar.DAY_OF_YEAR) == 1 ||
-                            (cal2.get(Calendar.YEAR) > cal1.get(Calendar.YEAR))) {
-                            // Consecutive day
-                            repository.saveUserProgress(progress.copy(currentStreak = progress.currentStreak + 1, lastLoginTimestamp = now))
-                        } else {
-                            // Streak broken
-                            repository.saveUserProgress(progress.copy(currentStreak = 1, lastLoginTimestamp = now))
+            val progress = repository.userProgress.firstOrNull()
+            val today = getTodayDateString()
+            if (progress == null) {
+                repository.saveUserProgress(
+                    UserProgress(
+                        id = 1,
+                        currentStreak = 0,
+                        longestStreak = 0,
+                        lastPracticedDate = "",
+                        lastLoginTimestamp = System.currentTimeMillis(),
+                        wordsLearnedCount = 0,
+                        totalPracticeDays = 0,
+                        streakFreezeCount = 1
+                    )
+                )
+                generateDailyVocabulary()
+            } else {
+                val lastPracticed = progress.lastPracticedDate
+                if (lastPracticed.isNotBlank()) {
+                    val daysDiff = calculateDaysDiff(lastPracticed, today)
+                    if (daysDiff > 1L) {
+                        if (daysDiff == 2L && progress.streakFreezeCount > 0) {
+                            // Streak protected by shield
+                            _streakCelebrationMessage.value = "Bouclier actif ! Votre série de ${progress.currentStreak} jours a été protégée."
+                        } else if (progress.currentStreak > 0) {
+                            // Inactivity broke the streak
+                            repository.saveUserProgress(
+                                progress.copy(
+                                    currentStreak = 0,
+                                    lastLoginTimestamp = System.currentTimeMillis()
+                                )
+                            )
                         }
                     }
                 }
+
+                val cal1 = Calendar.getInstance().apply { timeInMillis = progress.lastLoginTimestamp }
+                val cal2 = Calendar.getInstance().apply { timeInMillis = System.currentTimeMillis() }
+                if (cal1.get(Calendar.DAY_OF_YEAR) != cal2.get(Calendar.DAY_OF_YEAR) || cal1.get(Calendar.YEAR) != cal2.get(Calendar.YEAR)) {
+                    generateDailyVocabulary()
+                    repository.saveUserProgress(progress.copy(lastLoginTimestamp = System.currentTimeMillis()))
+                }
             }
+        }
+    }
+
+    fun recordDailyPractice(activitySummary: String, minutes: Int = 5) {
+        viewModelScope.launch {
+            val today = getTodayDateString()
+            val currentProgress = repository.userProgress.firstOrNull() ?: UserProgress()
+
+            // 1. Persist practice session in Room
+            val existingLog = repository.getPracticeLogForDate(today)
+            if (existingLog != null) {
+                val updatedLog = existingLog.copy(
+                    practiceCount = existingLog.practiceCount + 1,
+                    minutesSpent = existingLog.minutesSpent + minutes,
+                    activitiesSummary = if (existingLog.activitiesSummary.contains(activitySummary)) existingLog.activitiesSummary else "${existingLog.activitiesSummary}, $activitySummary",
+                    timestamp = System.currentTimeMillis()
+                )
+                repository.insertPracticeLog(updatedLog)
+            } else {
+                val newLog = DailyPracticeLog(
+                    date = today,
+                    practiceCount = 1,
+                    minutesSpent = minutes,
+                    activitiesSummary = activitySummary,
+                    timestamp = System.currentTimeMillis()
+                )
+                repository.insertPracticeLog(newLog)
+            }
+
+            // 2. Evaluate streak continuity
+            val lastDate = currentProgress.lastPracticedDate
+            if (lastDate == today) {
+                repository.saveUserProgress(
+                    currentProgress.copy(lastLoginTimestamp = System.currentTimeMillis())
+                )
+                _streakCelebrationMessage.value = "Pratique validée pour aujourd'hui ! 🔥 ${currentProgress.currentStreak} jours consécutifs !"
+                return@launch
+            }
+
+            var newStreak = 1
+            var newFreezes = currentProgress.streakFreezeCount
+            var freezeUsed = false
+
+            if (lastDate.isBlank()) {
+                newStreak = 1
+            } else {
+                val diff = calculateDaysDiff(lastDate, today)
+                when {
+                    diff == 1L -> {
+                        newStreak = currentProgress.currentStreak + 1
+                    }
+                    diff == 2L && currentProgress.streakFreezeCount > 0 -> {
+                        newStreak = currentProgress.currentStreak + 1
+                        newFreezes = (currentProgress.streakFreezeCount - 1).coerceAtLeast(0)
+                        freezeUsed = true
+                    }
+                    else -> {
+                        newStreak = 1
+                    }
+                }
+            }
+
+            val newLongest = maxOf(currentProgress.longestStreak, newStreak)
+            val newTotalDays = currentProgress.totalPracticeDays + 1
+
+            val updatedProgress = currentProgress.copy(
+                currentStreak = newStreak,
+                longestStreak = newLongest,
+                lastPracticedDate = today,
+                lastLoginTimestamp = System.currentTimeMillis(),
+                totalPracticeDays = newTotalDays,
+                streakFreezeCount = newFreezes
+            )
+            repository.saveUserProgress(updatedProgress)
+
+            val msg = when {
+                freezeUsed -> "Bouclier utilisé ! Série sauvée : 🔥 $newStreak jours consécutifs !"
+                newStreak == 1 -> "Premier jour validé ! Votre série commence : 🔥 1 jour !"
+                newStreak % 7 == 0 -> "Félicitations ! 🔥 $newStreak jours d'affilée ! Habitude d'or débloquée !"
+                else -> "Bravo ! 🔥 Série portée à $newStreak jours consécutifs !"
+            }
+            _streakCelebrationMessage.value = msg
+        }
+    }
+
+    fun simulateConsecutiveStreak(days: Int) {
+        viewModelScope.launch {
+            for (i in (days - 1) downTo 0) {
+                val date = getDaysAgoDateString(i)
+                val log = DailyPracticeLog(
+                    date = date,
+                    practiceCount = 1,
+                    minutesSpent = 10,
+                    activitiesSummary = "Entraînement simulé (Jour ${days - i})",
+                    timestamp = System.currentTimeMillis() - (i * 24L * 60 * 60 * 1000)
+                )
+                repository.insertPracticeLog(log)
+            }
+            val currentProgress = repository.userProgress.firstOrNull() ?: UserProgress()
+            val updated = currentProgress.copy(
+                currentStreak = days,
+                longestStreak = maxOf(currentProgress.longestStreak, days),
+                lastPracticedDate = getTodayDateString(),
+                totalPracticeDays = currentProgress.totalPracticeDays + days,
+                lastLoginTimestamp = System.currentTimeMillis()
+            )
+            repository.saveUserProgress(updated)
+            _streakCelebrationMessage.value = "Série simulée : 🔥 $days jours d'affilée !"
+        }
+    }
+
+    fun resetStreakData() {
+        viewModelScope.launch {
+            repository.clearPracticeLogs()
+            val currentProgress = repository.userProgress.firstOrNull() ?: UserProgress()
+            repository.saveUserProgress(
+                currentProgress.copy(
+                    currentStreak = 0,
+                    longestStreak = 0,
+                    lastPracticedDate = "",
+                    totalPracticeDays = 0,
+                    streakFreezeCount = 1
+                )
+            )
+            _streakCelebrationMessage.value = "Série réinitialisée."
         }
     }
 
@@ -218,6 +401,7 @@ class TutorViewModel(private val repository: Repository) : ViewModel() {
             repository.updateWord(word.copy(isLearned = true))
             val progress = userProgress.value ?: UserProgress()
             repository.saveUserProgress(progress.copy(wordsLearnedCount = progress.wordsLearnedCount + 1))
+            recordDailyPractice("Vocabulaire : ${word.english}")
         }
     }
 
@@ -260,7 +444,7 @@ class TutorViewModel(private val repository: Repository) : ViewModel() {
                 val aiMsg = ChatMessage(role = "ai", text = responseText)
                 _chatHistory.update { it + aiMsg }
                 onAiResponse(responseText)
-                
+                recordDailyPractice("Conversation Tuteur IA")
             } catch (e: Exception) {
                 _error.value = "Failed to connect to AI: ${e.message}"
             } finally {
@@ -477,6 +661,7 @@ class TutorViewModel(private val repository: Repository) : ViewModel() {
             // Update user progress count
             val currentProgress = userProgress.value ?: UserProgress(id = 1, currentStreak = 1, lastLoginTimestamp = System.currentTimeMillis(), wordsLearnedCount = 0)
             repository.saveUserProgress(currentProgress.copy(wordsLearnedCount = currentProgress.wordsLearnedCount + 1))
+            recordDailyPractice("Leçon : $lessonTitle")
         }
     }
 }

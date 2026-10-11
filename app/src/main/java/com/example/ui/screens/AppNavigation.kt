@@ -15,6 +15,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -193,6 +194,12 @@ fun HomeScreen(
     val subTextColor = MaterialTheme.colorScheme.onSurfaceVariant
     val primaryColor = MaterialTheme.colorScheme.primary
 
+    var showStreakDialog by remember { mutableStateOf(false) }
+
+    if (showStreakDialog) {
+        StreakDetailDialog(viewModel = viewModel, onDismiss = { showStreakDialog = false })
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -235,6 +242,10 @@ fun HomeScreen(
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
                         .border(1.dp, primaryColor.copy(alpha = 0.2f), CircleShape)
+                        .clickable {
+                            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                            showStreakDialog = true
+                        }
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -244,6 +255,11 @@ fun HomeScreen(
                     }
                 }
             }
+        }
+
+        // Daily Streak Tracker Component
+        item {
+            DailyStreakCard(viewModel = viewModel)
         }
 
         item {
